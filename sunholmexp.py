@@ -3,7 +3,6 @@ import sys
 import json
 import random
 
-
 level_exp_caps =  [
 	0,
 	300,
@@ -204,18 +203,36 @@ def main():
 
 
 	for player in players:
-		ql_exp_string = ""
+		quest_log_exp_string = ""
 		if player["quest_log_bonus_exp"] > 0:
-			ql_exp_string = ""+str(player["quest_log_bonus_exp"])+"xp bonus from quest log,"
+			quest_log_exp_string = str(player["quest_log_bonus_exp"])+"xp bonus from quest log, "
 		if player["leveled_up"]:
-			print(player["name"], "leveled up to level", str(player["level"]+1) + " ("+ql_exp_string+" " + str(player["exp"] + player["gained_exp"]) + "xp total).", remaining_exp(player["level"]+1, player["exp"] + player["gained_exp"]))
+			print("{player_name} leveled up to level {new_level} ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+				player_name=player["name"],
+				new_level=str(player["level"]+1),
+				quest_log_exp_string=quest_log_exp_string,
+				new_total_exp=str(player["exp"] + player["gained_exp"]),
+				remaining_exp_string=remaining_exp(player["level"]+1, player["exp"] + player["gained_exp"])
+			))
+
 		else:
-			print(player["name"], "gained", str(player["gained_exp"])+"xp ("+ql_exp_string+" "+str(player["exp"] + player["gained_exp"])+"xp total).", remaining_exp(player["level"], player["exp"] + player["gained_exp"])) 
+			print("{player_name} gained {gained_exp}xp ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+				player_name=player["name"],
+				gained_exp=str(player["gained_exp"]),
+				quest_log_exp_string=quest_log_exp_string,
+				new_total_exp=str(player["exp"] + player["gained_exp"]),
+				remaining_exp_string=remaining_exp(player["level"], player["exp"] + player["gained_exp"]),
+			))
+
 		new_player_exp[player["name"]] = player["exp"] + player["gained_exp"]
 
 		if player["name"] in quest_log_player_gold:
-			print("-", player["name"], "also received", str(quest_log_player_gold[player["name"]])+"Gp ("+str(quest_log_gold_map[player["level"]-1]["multiplier"])+"d"+str(quest_log_gold_map[player["level"]-1]["dice_size"])+") for their quest log")
-
+			print("- {player_name} also received {received_gold}Gp ({gold_multiplier}*1d{gold_dice_size}) for their quest log.".format(
+				player_name=player["name"],
+				received_gold=str(quest_log_player_gold[player["name"]]),
+				gold_multiplier=str(quest_log_gold_map[player["level"]-1]["multiplier"]),
+				gold_dice_size=str(quest_log_gold_map[player["level"]-1]["dice_size"]),
+			))
 	import datetime
 	today = datetime.date.today()
 
@@ -250,7 +267,13 @@ def bonus_gold_for_quest_log(level):
 	return roll * quest_log_gold_map[level-1]["multiplier"]
 
 def remaining_exp(current_level, current_exp):
-	return str(current_exp - level_exp_caps[current_level-1])+"/"+str(level_exp_caps[current_level]-level_exp_caps[current_level-1])+"xp through level " +str(current_level) + " ("+str(level_exp_caps[current_level] - (current_exp)) + "xp remaining)"
+	return "{exp_within_level}/{total_level_exp}xp through level {current_level} ({remaining_exp_within_level}xp remaining)".format(
+		exp_within_level=str(current_exp - level_exp_caps[current_level-1]),
+		total_level_exp=str(level_exp_caps[current_level]-level_exp_caps[current_level-1]),
+		current_level=current_level,
+		remaining_exp_within_level=str(level_exp_caps[current_level] - (current_exp)),
+	)
+
 
 
 def divide_exp(total_exp, players):
