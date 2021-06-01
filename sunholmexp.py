@@ -126,6 +126,11 @@ def main():
 		argv = argv[:-1]
 		save=True
 
+	stage = False
+	if argv[-1] == "--stage":
+		argv = argv[:-1]
+		stage=True
+
 
 	player_exp_history = []
 	with open("playerexpcache.json", "r") as f:
@@ -226,6 +231,11 @@ def main():
 	if save:
 		with open("playerexpcache.json", "w") as f:
 			json.dump(player_exp_history, f, indent=4)
+	elif stage:
+		with open("playerexpcache-stage.json", "w") as f:
+			json.dump(player_exp_history, f, indent=4)
+		print("Results saved to staging file")
+
 	else:
 		print("Not Saving Results use --save to save results")
 
