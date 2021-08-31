@@ -2,8 +2,9 @@ import math
 import numpy as np
 from typing import List
 from PIL import Image
+import argparse
 
-level_exp_caps =  [
+level_xp_caps =  [
     0,      # Level Start 1
     300,    # Level Start 2
     900,    # Level Start 3
@@ -31,124 +32,150 @@ level_exp_caps =  [
 def scaling(source_player_level: int, target_player_level: int) -> float:
     return math.pow(math.sqrt(2), source_player_level-target_player_level)
 
-# def xp_remaining_in_level(input_exp: int) -> int:
-#   level = level_from_exp(input_exp)
+# def xp_remaining_in_level(input_xp: int) -> int:
+#   level = level_from_xp(input_xp)
 
-#   return level_exp_caps[level] - input_exp
+#   return level_xp_caps[level] - input_xp
 
-def level_from_exp(exp: int) -> int:
-    for i, level_exp_cap in enumerate(level_exp_caps):
-        if exp < level_exp_cap:
+def level_from_xp(xp: int) -> int:
+    for i, level_xp_cap in enumerate(level_xp_caps):
+        if xp < level_xp_cap:
             return i
-    if exp == level_exp_caps[-1]:
+    if xp == level_xp_caps[-1]:
         return 20
 
-    print("Error, more exp then possible", exp)
+    print("Error, more xp then possible", xp)
     return 20
+
+
+
 
 
 def main():
-    gift(23000, 300)
-    print("====")
-    gift(23000, 800)
-    print("====")
-    gift(300, 23000)
-    print("====")
-    gift(355000, 300)
-    print("====")
-    gift(300, 300)
-    print("====")
-    gift(10000, 10000)
+
+    parser = argparse.ArgumentParser(description="Transfer Scaled XP Between Players")
+
+    parser.add_argument('-d', '--donor', metavar="xp", type=int, action='extend', nargs="+", help="A source of XP to be given to the receiver", required=True)
+    parser.add_argument('-r', '--receiver', metavar="xp", type=int, help="The XP the receiver already has", required=True)
+
+    parsed_args = parser.parse_args()
 
 
-def gift(donor_exp, receiver_exp):
-    new_exp = transfer_exp_scaled_level_range(donor_exp, receiver_exp)
+    receiver_xp = parsed_args.receiver
+
+    donor_xps = parsed_args.donor
+
+    print("Receiver's XP starting at {xp} (Level {level})".format(
+        xp=receiver_xp,
+        level=level_from_xp(receiver_xp)
+    ))
+
+    if len(donor_xps) > 1:
+        for (index, donor_xp) in enumerate(donor_xps):
+            print()
+            receiver_xp = gift(donor_xp, receiver_xp, index+1)
+    else:
+        receiver_xp = gift(donor_xps[0], receiver_xp)
 
 
-    print("Giving from level {} ({} exp) to level {} ({} exp)".format(level_from_exp(donor_exp), donor_exp, level_from_exp(receiver_exp), receiver_exp))
-
-    print("They Received {} exp ({:.2f}% of the donor's exp was transferred)".format(new_exp-receiver_exp, (new_exp-receiver_exp)/donor_exp*100 ))
-    print("Now they have level {} ({} exp)".format(level_from_exp(new_exp), new_exp))
+def gift(donor_xp, receiver_xp, donor_index=None):
+    new_xp = transfer_xp_scaled_level_range(donor_xp, receiver_xp)
 
 
-# Build the scaled exp cap list
-scaled_exp_caps = [0]
+    if donor_index is None:
+        donor_index = ""
+    else:
+        donor_index = " " + str(donor_index)
+
+    print("Donor{donorindex}'s {donorxp}XP (Level {donorlevel}) being given to receiver.".format(
+        donorlevel=level_from_xp(donor_xp),
+        donorxp=donor_xp,
+        donorindex=donor_index,
+    ))
+
+    print("They Received {}XP ({:.2f}% of the donor's xp was transferred)".format(new_xp-receiver_xp, (new_xp-receiver_xp)/donor_xp*100 ))
+    print("Now they have {}XP (Level {})".format(new_xp, level_from_xp(new_xp)))
+
+    return new_xp
+
+# Build the scaled xp cap list
+scaled_xp_caps = [0]
 for i in range(19):
-    original_exp_required = level_exp_caps[i+1] - level_exp_caps[i]
+    original_xp_required = level_xp_caps[i+1] - level_xp_caps[i]
     scaling_value = scaling(i+1, 1)
-    scaled_exp_required = math.floor(original_exp_required * scaling_value)
-    scaled_exp_caps.append(scaled_exp_caps[-1] + scaled_exp_required)
-scaled_exp_caps.append(scaled_exp_caps[-1])
+    scaled_xp_required = math.floor(original_xp_required * scaling_value)
+    scaled_xp_caps.append(scaled_xp_caps[-1] + scaled_xp_required)
+scaled_xp_caps.append(scaled_xp_caps[-1])
 
 
-def to_scaled_exp(exp: int) -> int:
+def to_scaled_xp(xp: int) -> int:
     # scale each level chunk by chunk
     # We can probably lookup the scaled whole-level values then just scale the current level
 
-    level = level_from_exp(exp)
-    gained_exp_in_level = exp - level_exp_caps[level-1]
+    level = level_from_xp(xp)
+    gained_xp_in_level = xp - level_xp_caps[level-1]
 
     scaling_value = scaling(level, 1)
 
-    scaled_exp_in_level = scaling_value * gained_exp_in_level
+    scaled_xp_in_level = scaling_value * gained_xp_in_level
 
-    # print(level, scaling_value, gained_exp_in_level, scaled_exp_caps[level-1])
+    # print(level, scaling_value, gained_xp_in_level, scaled_xp_caps[level-1])
 
-    return scaled_exp_in_level + scaled_exp_caps[level-1]
+    return scaled_xp_in_level + scaled_xp_caps[level-1]
 
 
 
-def get_level_from_scaled_exp(scaled_exp: int) -> int:
-    for i, level_exp_cap in enumerate(scaled_exp_caps):
-        if scaled_exp < level_exp_cap:
+def get_level_from_scaled_xp(scaled_xp: int) -> int:
+    for i, level_xp_cap in enumerate(scaled_xp_caps):
+        if scaled_xp < level_xp_cap:
             return i
-    if scaled_exp == scaled_exp_caps[-1]:
+    if scaled_xp == scaled_xp_caps[-1]:
         return 20
 
-    print("Error, more scaled exp then possible", scaled_exp)
+    print("Error, more scaled xp then possible", scaled_xp)
     return 20
 
-def from_scaled_exp(scaled_exp: int) -> int:
+def from_scaled_xp(scaled_xp: int) -> int:
 
-    level = get_level_from_scaled_exp(scaled_exp)
+    level = get_level_from_scaled_xp(scaled_xp)
 
     scaling_value = scaling(level, 1)
-    scaled_exp_in_level = scaled_exp - scaled_exp_caps[level-1]
+    scaled_xp_in_level = scaled_xp - scaled_xp_caps[level-1]
 
-    exp = int(round(scaled_exp_in_level / scaling_value))
+    xp = int(round(scaled_xp_in_level / scaling_value))
 
-    return level_exp_caps[level-1] + exp
+    return level_xp_caps[level-1] + xp
 
 # last_scaled_i = 0
 # for i in range(355000):
-#   scaled_i = to_scaled_exp(i)
+#   scaled_i = to_scaled_xp(i)
 #   if last_scaled_i > scaled_i:
 #       print("Invalid Scale", i, scaled_i, last_scaled_i)
 #       last_scaled_i = scaled_i
-#   if i != from_scaled_exp(scaled_i):
-#       print("Failure", i, from_scaled_exp(scaled_i))
+#   if i != from_scaled_xp(scaled_i):
+#       print("Failure", i, from_scaled_xp(scaled_i))
 #       exit(1)
 # print("No error!")
 
 
 
-def transfer_exp_scaled_level_range(source_exp: int, target_exp: int) -> int:
+def transfer_xp_scaled_level_range(source_xp: int, target_xp: int) -> int:
 
-    if source_exp <= 0:
-        return target_exp
+    if source_xp <= 0:
+        return target_xp
 
-    scaled_source = to_scaled_exp(source_exp)
-    scaled_target = to_scaled_exp(target_exp)
+    scaled_source = to_scaled_xp(source_xp)
+    scaled_target = to_scaled_xp(target_xp)
 
     scaled_source = int(math.floor(scaled_source * .5))
 
-    total_scaled_exp = scaled_source + scaled_target
+    total_scaled_xp = scaled_source + scaled_target
 
-    if total_scaled_exp > scaled_exp_caps[-1]:
-        total_scaled_exp = scaled_exp_caps[-1]
+    if total_scaled_xp > scaled_xp_caps[-1]:
+        total_scaled_xp = scaled_xp_caps[-1]
 
 
-    return from_scaled_exp(total_scaled_exp)
+    return from_scaled_xp(total_scaled_xp)
 
 
 
@@ -158,24 +185,24 @@ def transfer_exp_scaled_level_range(source_exp: int, target_exp: int) -> int:
 def tenth_level_segments():
     segments = []
     for i in range(19):
-        for j in np.linspace(level_exp_caps[i], level_exp_caps[i+1], 11)[0:-1]:
+        for j in np.linspace(level_xp_caps[i], level_xp_caps[i+1], 11)[0:-1]:
             segments.append(int(j))
-    segments.append(level_exp_caps[20])
+    segments.append(level_xp_caps[20])
     return segments
 
 
 ################################################################################
-# Run a few tests to identify if there are any situations where having more exp
-# as an input does not yeild more exp as an output then a previous iteration
+# Run a few tests to identify if there are any situations where having more xp
+# as an input does not yeild more xp as an output then a previous iteration
 ################################################################################
 def tests(array_2d):
 
     # Generate a grid of test case input values 
     array_2d = []
-    for exp_a in tenth_level_segments():
+    for xp_a in tenth_level_segments():
         row = []
-        for exp_b in tenth_level_segments():
-            row.append(transfer_exp_scaled_level_range(exp_a, exp_b))
+        for xp_b in tenth_level_segments():
+            row.append(transfer_xp_scaled_level_range(xp_a, xp_b))
         array_2d.append(row)
 
     print(array_2d)
