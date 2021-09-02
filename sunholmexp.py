@@ -3,33 +3,42 @@ import sys
 import json
 import random
 import datetime
+import argparse
+import os
+from typing import Any, List, Dict
+from dataclasses import dataclass
 
-from typing import Any
-
-level_exp_caps = [
-    0,
-    300,
-    900,
-    2700,
-    6500,
-    14000,
-    23000,
-    34000,
-    48000,
-    64000,
-    85000,
-    100000,
-    120000,
-    140000,
-    165000,
-    195000,
-    225000,
-    265000,
-    305000,
-    355000,
+################################ Level EXP Caps ################################
+# The The amount of exp you need to be at a specific level.                    #
+################################################################################
+level_exp_caps: List[int] = [
+    0,  # Min XP for level 1
+    300,  # Min XP for Level 2
+    900,  # Min XP for level 3
+    2700,  # Min XP for level 4
+    6500,  # Min XP for level 5
+    14000,  # Min XP for level 6
+    23000,  # Min XP for level 7
+    34000,  # Min XP for level 8
+    48000,  # Min XP for level 9
+    64000,  # Min XP for level 10
+    85000,  # Min XP for level 11
+    100000,  # Min XP for level 12
+    120000,  # Min XP for level 13
+    140000,  # Min XP for level 14
+    165000,  # Min XP for level 15
+    195000,  # Min XP for level 16
+    225000,  # Min XP for level 17
+    265000,  # Min XP for level 18
+    305000,  # Min XP for level 19
+    355000,  # Min XP for level 20
     355000,  # upper bound threshold at level 20, repeated for index delta convenience
 ]
 
+############################## Quest Log Gold Map ##############################
+# A lookup table for mapping the level of a character to the rng units to use  #
+# when calculating how much gold they will get for writing a quest log.        #
+################################################################################
 quest_log_gold_map = [
     {  # Level 1
         "multiplier": 5,
@@ -114,142 +123,364 @@ quest_log_gold_map = [
 ]
 
 
+# We are rewriting sunholmexp.py as an event source model
+
+EVENTSOURCE_FILE="sunholmexp_eventsource.json"
+
 def main() -> None:
-    argv = sys.argv
-    if len(argv) < 3:
-        print("Error, must have [totalexp] [playername:playerexp] ...")
+    parser = argparse.ArgumentParser(description="A Tool For Managing and Leveling Sunholm Players")
+
+
+    subparsers = parser.add_subparsers(help="Commands", dest="command")
+
+    parser_session_exp = subparsers.add_parser("exp", help="Grant a set of players exp for a session.")
+    parser_session_exp.add_argument('exp', type=int, help="The Amount of exp that was gained this session")
+    parser_session_exp.add_argument('-p', '--player', metavar="player", type=str, action='append', default=[], help="A player who participated this session.")
+    parser_session_exp.add_argument('-q', '--questlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session and participated in this one.")
+    parser_session_exp.add_argument('-f', '--fastlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session within a time limit and participated in this one.")
+
+    parser_new_player = subparsers.add_parser("new", help="Add a new player to the game")
+    parser_new_player.add_argument('playername', type=str, help="The name of the new player.")
+    parser_new_player.add_argument('--startingxp', metavar="xp", type=int, help="How much XP should the player start with", default=300)
+
+    parser_new_player = subparsers.add_parser("bonus", help="Give an out of band bonus to a player")
+    parser_new_player.add_argument('playername', type=str, help="The name of the player.")
+    parser_new_player.add_argument('bonusxp', type=int, help="How much xp bonus to give.")
+
+    parser_new_player = subparsers.add_parser("list", help="List current exp and levels")
+    parser_new_player.add_argument('playername', type=str, nargs="?", help="The name of the player.")
+
+    parser_new_player = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
+    # TODO, maybe an ability to print out an even more early one
+
+    parsed_args = parser.parse_args()
+
+
+    # print(parsed_args)
+    if parsed_args.command == "exp":
+        add_exp_event(
+            exp_gained=parsed_args.exp,
+            attending_players=parsed_args.player,
+            questlog_players=parsed_args.questlog,
+            fastlog_players=parsed_args.fastlog,
+        )
+        list_previous_update()
+        return
+
+    elif parsed_args.command == "new":
+        add_new_player_event(
+            player_name=parsed_args.playername,
+            starting_exp=parsed_args.startingxp)
+        list_previous_update()
+        return
+
+    elif parsed_args.command == "bonus":
+        add_bonus_exp_event(
+            player_name=parsed_args.playername,
+            bonus_exp=parsed_args.bonusxp
+        )
+        list_previous_update()
+        return
+
+    elif parsed_args.command == "list":
+        list_current_state()
+        return
+
+    elif parsed_args.command == "last":
+        list_previous_update()
+        return
+
+    print("Error, a command must be chosen. Use --help to see commands")
+
+
+def add_event(event: Any) -> None:
+    event_list = get_event_list()
+
+
+    today = datetime.datetime.now()
+    event["date"] = today.strftime('%Y/%m/%d-%H:%M:%S')
+
+    event_list.append(event)
+
+    with open(EVENTSOURCE_FILE, "w") as f:
+        json.dump(event_list, f, indent=4)
+
+
+def get_event_list() -> List[Any]:
+    if not os.path.exists(EVENTSOURCE_FILE): 
+        with open(EVENTSOURCE_FILE, "w") as f:
+            json.dump([], f)
+
+    with open(EVENTSOURCE_FILE, "r") as f:
+        eventsource = json.load(f)
+
+    return eventsource
+
+
+def add_exp_event(
+    exp_gained: int,
+    attending_players: List[str],
+    questlog_players: List[str],
+    fastlog_players: List[str]
+) -> None:
+    # TODO: Validate that the players present actually exist
+
+    if len(attending_players) + len(questlog_players) + len(fastlog_players) < 1:
+        print("No players specified. Please specify some players")
         exit(1)
 
-    save = False
-    if argv[-1] == "--save":
-        argv = argv[:-1]
-        save = True
+    if exp_gained < 1:
+        print("No EXP granted. Please grant some EXP")
+        exit(1)
 
-    stage = False
-    if argv[-1] == "--stage":
-        argv = argv[:-1]
-        stage = True
+    add_event({
+        "type": "sessionexp",
+        "exp_gained": exp_gained,
+        "players": attending_players,
+        "questlog_players": questlog_players,
+        "fastlog_players": fastlog_players,
+    })
 
-    player_exp_history = []
-    with open("playerexpcache.json", "r") as f:
-        player_exp_history = json.load(f)
+def add_new_player_event(
+    player_name: str,
+    starting_exp: int
+) -> None:
+    # TODO: Validate that this player does not already exist
+    add_event({
+        "type": "newplayer",
+        "name": player_name,
+        "exp": starting_exp,
+    })
 
-    cached_player_exp = player_exp_history[-1]["players"]
-    new_player_exp = {}
-    for player in cached_player_exp:
-        new_player_exp[player] = cached_player_exp[player]
+def add_bonus_exp_event(
+    player_name: str,
+    bonus_exp: int
+) -> None:
+    # TODO: Validate that this player exists
+    add_event({
+        "type": "bonusexp",
+        "name": player_name,
+        "bonusexp": bonus_exp,
+    })
 
-    total_exp = int(argv[1])
 
-    players = []
+def list_previous_update(n=0) -> None:
+    events = get_event_list()
+
+    if n <= 0:
+        n = len(events)+n
+
+    print("Showing the result of event {n} of {total_count} events.".format(
+        n=n,
+        total_count=len(events)))
+
+    state = State()
+    for event in events[:n-1]:
+        process_event(event, state)
+
+    print("\n".join(process_event(events[n-1], state)))
+
+
+def list_current_state() -> None: # todo this is not the right function but I am co-opting it for testing
+    events = get_event_list()
+
+    state = State()
+
+    for event in events:
+        process_event(event, state)
+
+    print(state.players)
+
+
+
+class State:
+    players: Dict[str,int] = {}
+
+
+
+
+def process_event(event: Any, state: State) -> List[str]:
+    if event["type"] == "newplayer":
+        return process_new_player_event(event, state)
+    elif event["type"] == "bonusexp":
+        return process_bonus_exp_event(event, state)
+    elif event["type"] == "sessionexp":
+        return process_session_exp_event(event, state)
+    else:
+        print("ERROR: Invalid Event", event)
+        return []
+
+########################### Process New Player Event ###########################
+# This function processes a new player event and outputs text indicating the   #
+# player that was added. Prints a warning if the player already exists as      #
+# this is not a valid event. If the player already exists the exp will be      #
+# overwritten by this event.                                                   #
+################################################################################
+def process_new_player_event(event: Any, state: State) -> List[str]:
+    if event["name"] in state.players:
+        print("WARNING: Duplicate New Players", event)
+
+    state.players[event["name"]] = event["exp"]
+
+    return [
+        "Created the new player {name} starting with {exp}xp (Level {level})".format(
+            name=event["name"],
+            exp=event["exp"],
+            level=get_level_from_exp(event["exp"])
+        )
+    ]
+
+
+################################################################################
+def process_bonus_exp_event(event: Any, state: State) -> List[str]:
+    if event["name"] not in state.players:
+        print("WARNING: Player not found for bonus", event)
+        return []
+
+    state.players[event["name"]] += event["bonusexp"]
+    current_player_level = get_level_from_exp(state.players[event["name"]])
+
+    return [
+        "{name} {direction} {exp}xp. They are currently at Level {level}".format(
+            name=event["name"],
+            direction="gained" if event["bonusexp"] > 0 else "lost",
+            exp=abs(event["bonusexp"]),
+            level=current_player_level,
+        )
+    ]
+
+
+# def player_leveling_text(name, old_xp, new_xp) -> List[str]:
+#     old_level = get_level_from_exp(old_xp)
+#     new_level = get_level_from_exp(new_xp)
+
+#     delta_exp = new_xp - old_xp
+#     next_level = new_level + 1
+
+#     if new_level > old_level:
+#         return [
+#             "**{name} Leveld up to level {new_level}** "
+#         ]
+#     else:
+#         return [
+#             "**{name} gained {delta_exp}xp ({exp_till_next_level}xp until level {next_level})** Including a 700xp bonus from a fast quest log. 40714xp total, 6714/14000xp through level 8."
+#         ]
+
+# **sillvester gained 6212xp (494xp until level 6)**. 13506xp total, 7006/7500xp through level 5.
+#
+# **avallach gained 2897xp (5088xp until level 9)** Including a 700xp bonus from a fast quest log . 42912xp total, 8912/14000xp through level 8.
+#      avallach also received 160Gp (40 * 1d10) for their quest log.
+#
+# **ignar gained 2197xp (3980xp until level 9)**. 44020xp total, 10020/14000xp through level 8.
+#
+# **mae gained 2897xp (7286xp until level 9)** Including a 700xp bonus from a fast quest log. 40714xp total, 6714/14000xp through level 8.
+#     mae also received 320Gp (40 * 1d10) for their quest log.
+
+# jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
+
+@dataclass
+class LevelingUpPlayer:
+    name: str
+    exp: int
+    level: int
+    should_get_quest_log_bonus_exp: bool = False
+    quest_log_bonus_exp: int = 0
+    gained_exp: int = 0
+    leveled_up: bool = False
+    quest_log_bonus_gold: int = 0
+
+def process_session_exp_event(event: Any, state: State) -> List[str]:
+    total_exp = event["exp_gained"]
+
+    players: List[LevelingUpPlayer] = []
 
     quest_log_player_gold = {}
 
-    for player in argv[2:]:
-        player_name = player
-        quest_log_bonus = False
-        quest_log_gold = False
+    # Init Player State
+    for player in event["players"]:
+        players.append(
+            LevelingUpPlayer(
+                name=player,
+                exp=state.players[player],
+                level=get_level_from_exp(state.players[player]),
+            )
+        )
 
-        # Suffix with + to indicate they wrote a quest log (effects gold only)
-        if player_name.endswith("+"):
-            player_name = player_name[:-1]
-            quest_log_gold = True
+    for player in event["questlog_players"]:
+        players.append(
+            LevelingUpPlayer(
+                name=player,
+                exp=state.players[player],
+                level=get_level_from_exp(state.players[player]),
+                should_get_quest_log_bonus_exp=True
+            )
+        )
 
-        # Suffix with ++ to indicate that they completed the quest log within
-        # a time frame
-        if player_name.endswith("+"):
-            player_name = player_name[:-1]
-            quest_log_bonus = True
-
-        if player_name in cached_player_exp:
-            player_exp = int(cached_player_exp[player_name])
-        else:
-            player_exp = 300
-            print("New player", player_name, "starting at 300xp")
-
-        player_level = get_level_from_exp(player_exp)
-
-        if quest_log_gold:
-            quest_log_player_gold[player_name] = bonus_gold_for_quest_log(player_level)
-
-        players.append({
-            "name": player_name,
-            "exp": player_exp,
-            "level": player_level,
-            "quest_log_bonus": quest_log_bonus,
-            "quest_log_bonus_exp": 0,
-            "gained_exp": 0,
-            "leveled_up": False
-        })
+    for player in event["fastlog_players"]:
+        player_level: int = get_level_from_exp(state.players[player])
+        players.append(
+            LevelingUpPlayer(
+                name=player,
+                exp=state.players[player],
+                level=player_level,
+                should_get_quest_log_bonus_exp=True,
+                quest_log_bonus_gold=bonus_gold_for_quest_log(player_level, seed=event["date"]),
+            )
+        )
 
     players = divide_exp(total_exp, players)
 
-    bonus_exp = sum([x["gained_exp"] for x in players]) - total_exp
+    bonus_exp = sum([player.gained_exp for player in players]) - total_exp
 
     for player in players:
-        if player["quest_log_bonus"]:
+        if player.should_get_quest_log_bonus_exp:
 
-            quest_log_bonus_exp = bonus_exp_for_quest_log(player["level"])
+            quest_log_bonus_exp = bonus_exp_for_quest_log(player.level)
 
-            if player["level"] < get_level_from_exp(math.ceil(player["exp"] + player["gained_exp"] + quest_log_bonus_exp)):
-                player["leveled_up"] = True
+            if player.level < get_level_from_exp(math.ceil(player.exp + player.gained_exp + quest_log_bonus_exp)):
+                player.leveled_up = True
 
-            player["gained_exp"] += quest_log_bonus_exp
-            player["quest_log_bonus_exp"] = quest_log_bonus_exp
+            player.gained_exp += quest_log_bonus_exp
+            player.quest_log_bonus_exp = quest_log_bonus_exp
+
+    output_lines: List[str] = []
 
     for player in players:
         quest_log_exp_string = ""
-        if player["quest_log_bonus_exp"] > 0:
-            quest_log_exp_string = str(player["quest_log_bonus_exp"]) + "xp bonus from quest log, "
-        if player["leveled_up"]:
-            print("{player_name} leveled up to level {new_level} ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
-                player_name=player["name"],
-                new_level=str(player["level"] + 1),
+        if player.quest_log_bonus_exp > 0:
+            quest_log_exp_string = str(player.quest_log_bonus_exp) + "xp bonus from quest log, "
+        if player.leveled_up:
+            output_lines.append("{player_name} leveled up to level {new_level} ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+                player_name=player.name,
+                new_level=str(player.level + 1),
                 quest_log_exp_string=quest_log_exp_string,
-                new_total_exp=str(player["exp"] + player["gained_exp"]),
-                remaining_exp_string=remaining_exp_string(player["level"] + 1, player["exp"] + player["gained_exp"])
+                new_total_exp=str(player.exp + player.gained_exp),
+                remaining_exp_string=remaining_exp_string(player.level + 1, player.exp + player.gained_exp)
             ))
 
         else:
-            print("{player_name} gained {gained_exp}xp ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
-                player_name=player["name"],
-                gained_exp=str(player["gained_exp"]),
+            output_lines.append("{player_name} gained {gained_exp}xp ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+                player_name=player.name,
+                gained_exp=str(player.gained_exp),
                 quest_log_exp_string=quest_log_exp_string,
-                new_total_exp=str(player["exp"] + player["gained_exp"]),
-                remaining_exp_string=remaining_exp_string(player["level"], player["exp"] + player["gained_exp"]),
+                new_total_exp=str(player.exp + player.gained_exp),
+                remaining_exp_string=remaining_exp_string(player.level, player.exp + player.gained_exp),
             ))
 
-        new_player_exp[player["name"]] = player["exp"] + player["gained_exp"]
-
-        if player["name"] in quest_log_player_gold:
-            print("- {player_name} also received {received_gold}Gp ({gold_multiplier}*1d{gold_dice_size}) for their quest log.".format(
-                player_name=player["name"],
-                received_gold=str(quest_log_player_gold[player["name"]]),
-                gold_multiplier=str(quest_log_gold_map[player["level"] - 1]["multiplier"]),
-                gold_dice_size=str(quest_log_gold_map[player["level"] - 1]["dice_size"]),
+        if player.quest_log_bonus_gold > 0:
+            output_lines.append("- {player_name} also received {received_gold}Gp ({gold_multiplier} 1d{gold_dice_size}) for their quest log.".format(
+                player_name=player.name,
+                received_gold=str(player.quest_log_bonus_gold),
+                gold_multiplier=str(quest_log_gold_map[player.level - 1]["multiplier"]),
+                gold_dice_size=str(quest_log_gold_map[player.level - 1]["dice_size"]),
             ))
-    today = datetime.date.today()
 
-    player_exp_history.append({
-        "date": today.strftime('%Y/%m/%d'),
-        "exp": total_exp,
-        "bonus_exp": bonus_exp,
-        "players": new_player_exp
-    })
+    output_lines.append("Bonus Exp: {bonus_exp} ({per_player} per player)".format(
+        bonus_exp=bonus_exp,
+        per_player=str(bonus_exp / len(players))
+    ))
 
-    if save:
-        with open("playerexpcache.json", "w") as f:
-            json.dump(player_exp_history, f, indent=4)
-    elif stage:
-        with open("playerexpcache-stage.json", "w") as f:
-            json.dump(player_exp_history, f, indent=4)
-        print("Results saved to staging file")
-
-    else:
-        print("Not Saving Results use --save to save results")
-
-    print("Bonus Exp:", bonus_exp, "(" + str(bonus_exp / len(players)) + ")")
-
+    return output_lines
 
 ################################################################################
 # bonus_exp_for_quest_log
@@ -267,7 +498,8 @@ def bonus_exp_for_quest_log(level: int) -> int:
 # Calculates the random amount of gold a character will receive for writing
 # a quest log within the time limit.
 ################################################################################
-def bonus_gold_for_quest_log(level: int) -> int:
+def bonus_gold_for_quest_log(level: int, seed:str) -> int:
+    random.seed(seed)
     roll = random.randint(1, quest_log_gold_map[level - 1]["dice_size"])
     return roll * quest_log_gold_map[level - 1]["multiplier"]
 
@@ -293,38 +525,38 @@ def remaining_exp_string(current_level: int, current_exp: int) -> str:
 # Injects the divided exp into each of the player objects. See
 # adjusted_player_award() for more info on how exp is divided.
 ################################################################################
-def divide_exp(total_exp: int, players: Any) -> Any:
+def divide_exp(total_exp: int, players: List[LevelingUpPlayer]) -> Any:
     if (total_exp == 0):
         for player in players:
-            player["gained_exp"] = math.ceil(player["gained_exp"])
+            player.gained_exp = math.ceil(player.gained_exp)
 
         return players
 
     all_players_leveled_up = True
     for player in players:
-        if not player["leveled_up"]:
+        if not player.leveled_up:
             all_players_leveled_up = False
             break
 
     if all_players_leveled_up:
         return players
 
-    max_player_level = max([x["level"] for x in players])
+    max_player_level = max([player.level for player in players])
 
-    total_player_slices = sum([adjusted_player_award(max_player_level, x["level"]) for x in players if not x["leveled_up"]])
+    total_player_slices = sum([adjusted_player_award(max_player_level, player.level) for player in players if not player.leveled_up])
     for player in players:
-        if player["leveled_up"]:
+        if player.leveled_up:
             continue
-        adjusted_award = adjusted_player_award(max_player_level, player["level"])
-        player["gained_exp"] += total_exp * adjusted_award / total_player_slices
+        adjusted_award = adjusted_player_award(max_player_level, player.level)
+        player.gained_exp += total_exp * adjusted_award / total_player_slices
 
     total_leftover_exp = 0
 
     for player in players:
-        if player["level"] < get_level_from_exp(math.ceil(player["exp"] + player["gained_exp"])):
-            player["leveled_up"] = True
-            leftover_exp = player["exp"] + player["gained_exp"] - level_exp_caps[player["level"]]
-            player["gained_exp"] = level_exp_caps[player["level"]] - player["exp"]
+        if player.level < get_level_from_exp(math.ceil(player.exp + player.gained_exp)):
+            player.leveled_up = True
+            leftover_exp = player.exp + player.gained_exp - level_exp_caps[player.level]
+            player.gained_exp = level_exp_caps[player.level] - player.exp
             total_leftover_exp += leftover_exp
 
     return divide_exp(total_leftover_exp, players)
