@@ -125,7 +125,7 @@ quest_log_gold_map = [
 
 # We are rewriting sunholmexp.py as an event source model
 
-EVENTSOURCE_FILE="sunholmexp_eventsource.json"
+EVENTSOURCE_FILE="exp_events.json"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="A Tool For Managing and Leveling Sunholm Players")
@@ -148,7 +148,7 @@ def main() -> None:
     parser_new_player.add_argument('bonusxp', type=int, help="How much xp bonus to give.")
 
     parser_new_player = subparsers.add_parser("list", help="List current exp and levels")
-    parser_new_player.add_argument('playername', type=str, nargs="?", help="The name of the player.")
+    parser_new_player.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
 
     parser_new_player = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
     # TODO, maybe an ability to print out an even more early one
@@ -183,7 +183,7 @@ def main() -> None:
         return
 
     elif parsed_args.command == "list":
-        list_current_state()
+        list_current_state(parsed_args.playername)
         return
 
     elif parsed_args.command == "last":
@@ -281,7 +281,7 @@ def list_previous_update(n=0) -> None:
     print("\n".join(process_event(events[n-1], state)))
 
 
-def list_current_state() -> None: # todo this is not the right function but I am co-opting it for testing
+def list_current_state(filter_player: str="") -> None: # todo this is not the right function but I am co-opting it for testing
     events = get_event_list()
 
     state = State()
@@ -289,7 +289,22 @@ def list_current_state() -> None: # todo this is not the right function but I am
     for event in events:
         process_event(event, state)
 
-    print(state.players)
+    for player in state.players:
+        if filter_player != "" and player != filter_player:
+            continue
+
+
+        exp = state.players[player]
+        level = get_level_from_exp(exp)
+
+        remaining_exp = remaining_exp_string(level, exp)
+
+        print("{player} {exp}xp (Level {level}) {remaining_exp}".format(
+            player=player,
+            exp=exp,
+            level=level,
+            remaining_exp=remaining_exp
+        ))
 
 
 
