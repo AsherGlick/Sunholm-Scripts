@@ -367,33 +367,7 @@ def process_bonus_exp_event(event: Any, state: State) -> List[str]:
     ]
 
 
-# def player_leveling_text(name, old_xp, new_xp) -> List[str]:
-#     old_level = get_level_from_exp(old_xp)
-#     new_level = get_level_from_exp(new_xp)
 
-#     delta_exp = new_xp - old_xp
-#     next_level = new_level + 1
-
-#     if new_level > old_level:
-#         return [
-#             "**{name} Leveld up to level {new_level}** "
-#         ]
-#     else:
-#         return [
-#             "**{name} gained {delta_exp}xp ({exp_till_next_level}xp until level {next_level})** Including a 700xp bonus from a fast quest log. 40714xp total, 6714/14000xp through level 8."
-#         ]
-
-# **sillvester gained 6212xp (494xp until level 6)**. 13506xp total, 7006/7500xp through level 5.
-#
-# **avallach gained 2897xp (5088xp until level 9)** Including a 700xp bonus from a fast quest log . 42912xp total, 8912/14000xp through level 8.
-#      avallach also received 160Gp (40 * 1d10) for their quest log.
-#
-# **ignar gained 2197xp (3980xp until level 9)**. 44020xp total, 10020/14000xp through level 8.
-#
-# **mae gained 2897xp (7286xp until level 9)** Including a 700xp bonus from a fast quest log. 40714xp total, 6714/14000xp through level 8.
-#     mae also received 320Gp (40 * 1d10) for their quest log.
-
-# jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
 
 @dataclass
 class LevelingUpPlayer:
@@ -407,6 +381,9 @@ class LevelingUpPlayer:
     quest_log_bonus_gold: int = 0
 
 def process_session_exp_event(event: Any, state: State) -> List[str]:
+    # Make sure random numbers are generate the same for this event
+    random.seed(event["date"])
+
     total_exp = event["exp_gained"]
 
     players: List[LevelingUpPlayer] = []
@@ -441,7 +418,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
                 exp=state.players[player],
                 level=player_level,
                 should_get_quest_log_bonus_exp=True,
-                quest_log_bonus_gold=bonus_gold_for_quest_log(player_level, seed=event["date"]),
+                quest_log_bonus_gold=bonus_gold_for_quest_log(player_level),
             )
         )
 
@@ -469,6 +446,8 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
                 exp=str(player.quest_log_bonus_exp)
             )
         if player.leveled_up:
+            # TODO: should be updated to be visually nicer as well.
+            # jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
             output_lines.append("{player_name} leveled up to level {new_level} ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
                 player_name=player.name,
                 new_level=str(player.level + 1),
@@ -525,8 +504,7 @@ def bonus_exp_for_quest_log(level: int) -> int:
 # Calculates the random amount of gold a character will receive for writing
 # a quest log within the time limit.
 ################################################################################
-def bonus_gold_for_quest_log(level: int, seed:str) -> int:
-    random.seed(seed)
+def bonus_gold_for_quest_log(level: int) -> int:
     roll = random.randint(1, quest_log_gold_map[level - 1]["dice_size"])
     return roll * quest_log_gold_map[level - 1]["multiplier"]
 
