@@ -270,9 +270,11 @@ def list_previous_update(n=0) -> None:
     if n <= 0:
         n = len(events)+n
 
-    print("Showing the result of event {n} of {total_count} events.".format(
+    output_string = "Showing the result of event {n} of {total_count} events.".format(
         n=n,
-        total_count=len(events)))
+        total_count=len(events))
+    print(output_string)
+    print("="*len(output_string))
 
     state = State()
     for event in events[:n-1]:
@@ -463,7 +465,9 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
     for player in players:
         quest_log_exp_string = ""
         if player.quest_log_bonus_exp > 0:
-            quest_log_exp_string = str(player.quest_log_bonus_exp) + "xp bonus from quest log, "
+            quest_log_exp_string = " Including a {exp}xp bonus from a fast quest log".format(
+                exp=str(player.quest_log_bonus_exp)
+            )
         if player.leveled_up:
             output_lines.append("{player_name} leveled up to level {new_level} ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
                 player_name=player.name,
@@ -474,21 +478,29 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
             ))
 
         else:
-            output_lines.append("{player_name} gained {gained_exp}xp ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+            current_exp = player.exp + player.gained_exp
+            output_lines.append("**{player_name} gained {gained_exp}xp ({remaining_exp_within_level}xp until Level {next_level})**{quest_log_exp_string}. {new_total_exp}xp total, {exp_within_level}/{total_level_exp}xp through Level {current_level}".format(
                 player_name=player.name,
                 gained_exp=str(player.gained_exp),
                 quest_log_exp_string=quest_log_exp_string,
                 new_total_exp=str(player.exp + player.gained_exp),
-                remaining_exp_string=remaining_exp_string(player.level, player.exp + player.gained_exp),
+                current_level=player.level,
+                next_level=player.level+1,
+                remaining_exp_within_level=str(level_exp_caps[player.level] - (current_exp)),
+                total_level_exp=str(level_exp_caps[player.level] - level_exp_caps[player.level - 1]),
+                exp_within_level=str(current_exp - level_exp_caps[player.level - 1]),
             ))
 
+
         if player.quest_log_bonus_gold > 0:
-            output_lines.append("- {player_name} also received {received_gold}Gp ({gold_multiplier} 1d{gold_dice_size}) for their quest log.".format(
+            output_lines.append("     {player_name} also received {received_gold}Gp ({gold_multiplier} x 1d{gold_dice_size}) for their quest log.".format(
                 player_name=player.name,
                 received_gold=str(player.quest_log_bonus_gold),
                 gold_multiplier=str(quest_log_gold_map[player.level - 1]["multiplier"]),
                 gold_dice_size=str(quest_log_gold_map[player.level - 1]["dice_size"]),
             ))
+
+        output_lines.append("")
 
     output_lines.append("Bonus Exp: {bonus_exp} ({per_player} per player)".format(
         bonus_exp=bonus_exp,
