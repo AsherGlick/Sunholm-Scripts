@@ -486,6 +486,10 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
         per_player=str(bonus_exp / len(players))
     ))
 
+
+    for player in players:
+        state.players[player.name] = player.exp + player.gained_exp
+
     return output_lines
 
 ################################################################################
