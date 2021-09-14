@@ -42,6 +42,8 @@ pixel_values: List[Tuple[float, int, int]] = []
 
 white_pixels: List[Tuple[int, int]] = []
 
+im.putalpha(255)
+
 pixels = im.load()
 width, height = im.size
 
