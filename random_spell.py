@@ -1,6 +1,7 @@
 import json
 import datetime
 import random
+import sys
 
 today = datetime.datetime.now()
 date = today.strftime('%Y/%m/%d')
@@ -8,11 +9,11 @@ date = today.strftime('%Y/%m/%d')
 
 
 
-with open("spells_20210914.json") as f:
+with open("spells_20210917.json") as f:
     spells = json.load(f)
 
 # random.seed(date)
-random_spells = random.sample(spells, 6)
+random_spells = random.sample(spells, int(sys.argv[1]))
 
 cost_lookup = {
     "Cantrip": 10,
