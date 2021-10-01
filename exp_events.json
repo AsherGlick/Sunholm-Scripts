@@ -141,5 +141,21 @@
             "Avallach"
         ],
         "date": "2021/09/24-18:53:17"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": 9300,
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Avallach",
+            "Sillvester"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2021/09/29-19:14:04"
     }
 ]
