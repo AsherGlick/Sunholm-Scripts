@@ -157,5 +157,21 @@
             "Nanny"
         ],
         "date": "2021/09/29-19:14:04"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": 11600,
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Avallach",
+            "Sillvester"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2021/10/10-17:07:37"
     }
 ]

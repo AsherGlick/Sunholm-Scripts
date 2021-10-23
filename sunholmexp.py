@@ -448,7 +448,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
         if player.leveled_up:
             # TODO: should be updated to be visually nicer as well.
             # jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
-            output_lines.append("{player_name} leveled up to level {new_level} ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+            output_lines.append("**{player_name} leveled up to level {new_level}** ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
                 player_name=player.name,
                 new_level=str(player.level + 1),
                 quest_log_exp_string=quest_log_exp_string,
