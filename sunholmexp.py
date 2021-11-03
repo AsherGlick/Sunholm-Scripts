@@ -127,6 +127,10 @@ quest_log_gold_map = [
 
 EVENTSOURCE_FILE="exp_events.json"
 
+class State:
+    players: Dict[str,int] = {}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="A Tool For Managing and Leveling Sunholm Players")
 
@@ -134,7 +138,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(help="Commands", dest="command")
 
     parser_session_exp = subparsers.add_parser("exp", help="Grant a set of players exp for a session.")
-    parser_session_exp.add_argument('exp', type=int, help="The Amount of exp that was gained this session")
+    parser_session_exp.add_argument('exp', type=str, help="The Amount of exp that was gained this session")
     parser_session_exp.add_argument('-p', '--player', metavar="player", type=str, action='append', default=[], help="A player who participated this session.")
     parser_session_exp.add_argument('-q', '--questlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session and participated in this one.")
     parser_session_exp.add_argument('-f', '--fastlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session within a time limit and participated in this one.")
@@ -143,14 +147,14 @@ def main() -> None:
     parser_new_player.add_argument('playername', type=str, help="The name of the new player.")
     parser_new_player.add_argument('--startingxp', metavar="xp", type=int, help="How much XP should the player start with", default=300)
 
-    parser_new_player = subparsers.add_parser("bonus", help="Give an out of band bonus to a player")
-    parser_new_player.add_argument('playername', type=str, help="The name of the player.")
-    parser_new_player.add_argument('bonusxp', type=int, help="How much xp bonus to give.")
+    parser_bonus_exp = subparsers.add_parser("bonus", help="Give an out of band bonus to a player")
+    parser_bonus_exp.add_argument('playername', type=str, help="The name of the player.")
+    parser_bonus_exp.add_argument('bonusxp', type=int, help="How much xp bonus to give.")
 
-    parser_new_player = subparsers.add_parser("list", help="List current exp and levels")
-    parser_new_player.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
+    parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
+    parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
 
-    parser_new_player = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
+    parser_last_event = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
     # TODO, maybe an ability to print out an even more early one
 
     parsed_args = parser.parse_args()
@@ -309,11 +313,19 @@ def list_current_state(filter_player: str="") -> None: # todo this is not the ri
         ))
 
 
+# Get a percentage of the total amount of EXP that would be required for each
+# player to level up if they were at the beginning of their respective level
+def get_party_level_percentage(state: State, players: List[str], percentage: int) -> int:
+    total_level_exp = 0
+    for player in players:
+        exp = state.players[player]
+        level = get_level_from_exp(exp)
 
-class State:
-    players: Dict[str,int] = {}
+        level_exp = level_exp_caps[level] - level_exp_caps[level - 1]
 
+        total_level_exp += level_exp
 
+    return int(total_level_exp / 100 * percentage)
 
 
 def process_event(event: Any, state: State) -> List[str]:
@@ -384,7 +396,21 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
     # Make sure random numbers are generate the same for this event
     random.seed(event["date"])
 
-    total_exp = event["exp_gained"]
+    exp_gain_chunks = event["exp_gained"].split("+")
+
+    total_exp = 0
+
+    for exp_gain_chunk in exp_gain_chunks:
+        if exp_gain_chunk.strip()[-1] == "%":
+            total_exp += get_party_level_percentage(
+                state,
+                event["players"] + event["questlog_players"] + event["fastlog_players"],
+                int(exp_gain_chunk.strip()[:-1])
+            )
+        else:
+            total_exp += int(exp_gain_chunk)
+
+
 
     players: List[LevelingUpPlayer] = []
 
@@ -481,10 +507,15 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
 
         output_lines.append("")
 
+    output_lines.append("Total Exp: {total_exp}".format(
+        total_exp=total_exp,
+    ))
+
     output_lines.append("Bonus Exp: {bonus_exp} ({per_player} per player)".format(
         bonus_exp=bonus_exp,
         per_player=str(bonus_exp / len(players))
     ))
+
 
 
     for player in players:

@@ -85,7 +85,7 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": 12800,
+        "exp_gained": "12800",
         "players": [
             "Sillvester",
             "Ignar"
@@ -99,7 +99,7 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": 1,
+        "exp_gained": "1",
         "players": [],
         "questlog_players": [],
         "fastlog_players": [
@@ -109,7 +109,7 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": 13000,
+        "exp_gained": "13000",
         "players": [
             "Ignar",
             "Jimmy",
@@ -129,7 +129,7 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": 4400,
+        "exp_gained": "4400",
         "players": [
             "Ignar",
             "Jimmy",
@@ -144,7 +144,7 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": 9300,
+        "exp_gained": "9300",
         "players": [
             "Ignar",
             "Jimmy",
@@ -160,7 +160,7 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": 11600,
+        "exp_gained": "11600",
         "players": [
             "Ignar",
             "Jimmy",
