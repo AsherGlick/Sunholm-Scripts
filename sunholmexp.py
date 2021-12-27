@@ -223,7 +223,7 @@ def get_event_list() -> List[Any]:
 
 
 def add_exp_event(
-    exp_gained: int,
+    exp_gained: str,
     attending_players: List[str],
     questlog_players: List[str],
     fastlog_players: List[str]
@@ -232,10 +232,6 @@ def add_exp_event(
 
     if len(attending_players) + len(questlog_players) + len(fastlog_players) < 1:
         print("No players specified. Please specify some players")
-        exit(1)
-
-    if exp_gained < 1:
-        print("No EXP granted. Please grant some EXP")
         exit(1)
 
     add_event({
@@ -314,8 +310,10 @@ def list_current_state(filter_player: str="") -> None: # todo this is not the ri
         ))
 
 
+################################################################################
 # Get a percentage of the total amount of EXP that would be required for each
 # player to level up if they were at the beginning of their respective level
+################################################################################
 def get_party_level_percentage(state: State, players: List[str], percentage: int) -> int:
     total_level_exp = 0
     for player in players:
