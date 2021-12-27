@@ -142,6 +142,7 @@ def main() -> None:
     parser_session_exp.add_argument('-p', '--player', metavar="player", type=str, action='append', default=[], help="A player who participated this session.")
     parser_session_exp.add_argument('-q', '--questlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session and participated in this one.")
     parser_session_exp.add_argument('-f', '--fastlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session within a time limit and participated in this one.")
+    parser_session_exp.add_argument('-n', '--null', metavar="player", type=str, action='append', default=[], help="A player who was not part of the day's quest but I want to leave in my command history because I am lazy.")
 
     parser_new_player = subparsers.add_parser("new", help="Add a new player to the game")
     parser_new_player.add_argument('playername', type=str, help="The name of the new player.")
