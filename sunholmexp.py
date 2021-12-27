@@ -208,7 +208,7 @@ def add_event(event: Any) -> None:
     event_list.append(event)
 
     with open(EVENTSOURCE_FILE, "w") as f:
-        json.dump(event_list, f, indent=4)
+        json.dump(event_list[::-1], f, indent=4)
 
 
 def get_event_list() -> List[Any]:
@@ -217,7 +217,7 @@ def get_event_list() -> List[Any]:
             json.dump([], f)
 
     with open(EVENTSOURCE_FILE, "r") as f:
-        eventsource = json.load(f)
+        eventsource = json.load(f)[::-1]
 
     return eventsource
 

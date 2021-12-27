@@ -1,135 +1,65 @@
 [
     {
-        "type": "newplayer",
-        "name": "Avallach",
-        "exp": 40015,
-        "date": "2021/09/02-16:47:44"
-    },
-    {
-        "type": "newplayer",
-        "name": "Poppy",
-        "exp": 3788,
-        "date": "2021/09/02-16:48:27"
-    },
-    {
-        "type": "newplayer",
-        "name": "Ignar",
-        "exp": 41823,
-        "date": "2021/09/02-16:48:40"
-    },
-    {
-        "type": "newplayer",
-        "name": "Maerilith",
-        "exp": 37817,
-        "date": "2021/09/02-16:49:37"
-    },
-    {
-        "type": "newplayer",
-        "name": "Jimmy",
-        "exp": 6500,
-        "date": "2021/09/02-16:50:46"
-    },
-    {
-        "type": "newplayer",
-        "name": "Taro",
-        "exp": 8568,
-        "date": "2021/09/02-16:51:03"
-    },
-    {
-        "type": "newplayer",
-        "name": "Kasdoth",
-        "exp": 900,
-        "date": "2021/09/02-16:51:25"
-    },
-    {
-        "type": "newplayer",
-        "name": "Lelyvia",
-        "exp": 21220,
-        "date": "2021/09/02-16:51:44"
-    },
-    {
-        "type": "newplayer",
-        "name": "Percival",
-        "exp": 1834,
-        "date": "2021/09/02-16:52:04"
-    },
-    {
-        "type": "newplayer",
-        "name": "Crash",
-        "exp": 34000,
-        "date": "2021/09/02-16:52:19"
-    },
-    {
-        "type": "newplayer",
-        "name": "Barkom",
-        "exp": 2700,
-        "date": "2021/09/02-16:52:30"
-    },
-    {
-        "type": "newplayer",
-        "name": "Kharon",
-        "exp": 900,
-        "date": "2021/09/02-16:52:41"
-    },
-    {
-        "type": "newplayer",
-        "name": "Jagoda",
-        "exp": 2700,
-        "date": "2021/09/02-16:52:53"
-    },
-    {
-        "type": "newplayer",
-        "name": "Sillvester",
-        "exp": 7294,
-        "date": "2021/09/02-16:53:07"
-    },
-    {
         "type": "sessionexp",
-        "exp_gained": "12800",
-        "players": [
-            "Sillvester",
-            "Ignar"
-        ],
-        "questlog_players": [],
-        "fastlog_players": [
-            "Maerilith",
-            "Avallach"
-        ],
-        "date": "2021/09/02-16:57:18"
-    },
-    {
-        "type": "sessionexp",
-        "exp_gained": "1",
-        "players": [],
-        "questlog_players": [],
-        "fastlog_players": [
-            "Avallach"
-        ],
-        "date": "2021/09/03-19:41:25"
-    },
-    {
-        "type": "sessionexp",
-        "exp_gained": "13000",
+        "exp_gained": "3900",
         "players": [
             "Ignar",
-            "Jimmy",
             "Avallach"
         ],
         "questlog_players": [],
         "fastlog_players": [
             "Maerilith"
         ],
-        "date": "2021/09/10-20:06:46"
-    },
-    {
-        "type": "newplayer",
-        "name": "Nanny",
-        "exp": 300,
-        "date": "2021/09/24-18:43:29"
+        "date": "2021/12/15-19:17:46"
     },
     {
         "type": "sessionexp",
-        "exp_gained": "4400",
+        "exp_gained": "10%",
+        "players": [
+            "Ignar",
+            "Avallach",
+            "Crash"
+        ],
+        "questlog_players": [
+            "Maerilith"
+        ],
+        "fastlog_players": [
+            "Nanny"
+        ],
+        "date": "2021/12/08-19:17:46"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10%",
+        "players": [
+            "Ignar",
+            "Nanny",
+            "Avallach"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2021/12/01-19:17:46"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "2300",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Nanny",
+            "Avallach"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2021/11/17-19:17:46"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "15%",
         "players": [
             "Ignar",
             "Jimmy",
@@ -137,10 +67,83 @@
         ],
         "questlog_players": [],
         "fastlog_players": [
-            "Maerilith",
-            "Avallach"
+            "Maerilith"
         ],
-        "date": "2021/09/24-18:53:17"
+        "date": "2021/11/17-19:17:30"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "25%",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2021/11/03-17:07:37"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "6900",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Avallach",
+            "Sillvester",
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2021/10/27-17:07:37"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10%",
+        "players": [
+            "Ignar",
+            "Jimmy"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2021/10/20-17:07:37"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Ignar",
+            "Avallach",
+            "Jimmy"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2021/10/13-17:07:37"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "11600",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Avallach",
+            "Sillvester"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2021/10/10-17:07:37"
     },
     {
         "type": "sessionexp",
@@ -160,18 +163,145 @@
     },
     {
         "type": "sessionexp",
-        "exp_gained": "11600",
+        "exp_gained": "4400",
         "players": [
             "Ignar",
             "Jimmy",
-            "Avallach",
-            "Sillvester"
+            "Nanny"
         ],
         "questlog_players": [],
         "fastlog_players": [
             "Maerilith",
-            "Nanny"
+            "Avallach"
         ],
-        "date": "2021/10/10-17:07:37"
+        "date": "2021/09/24-18:53:17"
+    },
+    {
+        "type": "newplayer",
+        "name": "Nanny",
+        "exp": 300,
+        "date": "2021/09/24-18:43:29"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "13000",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Avallach"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2021/09/10-20:06:46"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "1",
+        "players": [],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Avallach"
+        ],
+        "date": "2021/09/03-19:41:25"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "12800",
+        "players": [
+            "Sillvester",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Avallach"
+        ],
+        "date": "2021/09/02-16:57:18"
+    },
+    {
+        "type": "newplayer",
+        "name": "Sillvester",
+        "exp": 7294,
+        "date": "2021/09/02-16:53:07"
+    },
+    {
+        "type": "newplayer",
+        "name": "Jagoda",
+        "exp": 2700,
+        "date": "2021/09/02-16:52:53"
+    },
+    {
+        "type": "newplayer",
+        "name": "Kharon",
+        "exp": 900,
+        "date": "2021/09/02-16:52:41"
+    },
+    {
+        "type": "newplayer",
+        "name": "Barkom",
+        "exp": 2700,
+        "date": "2021/09/02-16:52:30"
+    },
+    {
+        "type": "newplayer",
+        "name": "Crash",
+        "exp": 34000,
+        "date": "2021/09/02-16:52:19"
+    },
+    {
+        "type": "newplayer",
+        "name": "Percival",
+        "exp": 1834,
+        "date": "2021/09/02-16:52:04"
+    },
+    {
+        "type": "newplayer",
+        "name": "Lelyvia",
+        "exp": 21220,
+        "date": "2021/09/02-16:51:44"
+    },
+    {
+        "type": "newplayer",
+        "name": "Kasdoth",
+        "exp": 900,
+        "date": "2021/09/02-16:51:25"
+    },
+    {
+        "type": "newplayer",
+        "name": "Taro",
+        "exp": 8568,
+        "date": "2021/09/02-16:51:03"
+    },
+    {
+        "type": "newplayer",
+        "name": "Jimmy",
+        "exp": 6500,
+        "date": "2021/09/02-16:50:46"
+    },
+    {
+        "type": "newplayer",
+        "name": "Maerilith",
+        "exp": 37817,
+        "date": "2021/09/02-16:49:37"
+    },
+    {
+        "type": "newplayer",
+        "name": "Ignar",
+        "exp": 41823,
+        "date": "2021/09/02-16:48:40"
+    },
+    {
+        "type": "newplayer",
+        "name": "Poppy",
+        "exp": 3788,
+        "date": "2021/09/02-16:48:27"
+    },
+    {
+        "type": "newplayer",
+        "name": "Avallach",
+        "exp": 40015,
+        "date": "2021/09/02-16:47:44"
     }
 ]
