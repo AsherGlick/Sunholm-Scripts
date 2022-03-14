@@ -1,6 +1,144 @@
 [
     {
         "type": "sessionexp",
+        "exp_gained": "15%",
+        "players": [
+            "Maerilith",
+            "Avallach",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny"
+        ],
+        "date": "2022/03/09-20:12:23"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10000",
+        "players": [
+            "Maerilith",
+            "Avallach",
+            "Ignar",
+            "Jimmy",
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [],
+        "date": "2022/03/08-00:36:02"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny"
+        ],
+        "date": "2022/03/08-00:31:21"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Avallach"
+        ],
+        "date": "2022/03/08-00:31:13"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2022/03/08-00:31:03"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Jimmy"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2022/03/08-00:30:39"
+    },
+    {
+        "type": "bonusexp",
+        "name": "Maerilith",
+        "bonusexp": 21000,
+        "date": "2022/03/08-00:27:36"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "2800",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Nanny",
+            "Sarah"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Avallach"
+        ],
+        "date": "2022/01/26-19:42:06"
+    },
+    {
+        "type": "newplayer",
+        "name": "Sarah",
+        "exp": 35000,
+        "date": "2022/01/26-19:38:21"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "1050",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2022/01/19-19:34:02"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "1100",
+        "players": [
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [],
+        "date": "2022/01/19-17:22:47"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10000",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Jimmy"
+        ],
+        "questlog_players": [
+            "Maerilith"
+        ],
+        "fastlog_players": [],
+        "date": "2022/01/05-20:15:16"
+    },
+    {
+        "type": "sessionexp",
         "exp_gained": "3900",
         "players": [
             "Ignar",
