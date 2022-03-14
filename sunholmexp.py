@@ -426,12 +426,13 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
         )
 
     for player in event["questlog_players"]:
+        player_level: int = get_level_from_exp(state.players[player])
         players.append(
             LevelingUpPlayer(
                 name=player,
                 exp=state.players[player],
                 level=get_level_from_exp(state.players[player]),
-                should_get_quest_log_bonus_exp=True
+                quest_log_bonus_gold=bonus_gold_for_quest_log(player_level),
             )
         )
 
@@ -442,8 +443,8 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
                 name=player,
                 exp=state.players[player],
                 level=player_level,
-                should_get_quest_log_bonus_exp=True,
                 quest_log_bonus_gold=bonus_gold_for_quest_log(player_level),
+                should_get_quest_log_bonus_exp=True,
             )
         )
 
