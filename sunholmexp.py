@@ -122,6 +122,7 @@ quest_log_gold_map = [
     },
 ]
 
+MAX_LEVEL = 20
 
 # We are rewriting sunholmexp.py as an event source model
 
@@ -148,9 +149,14 @@ def main() -> None:
     parser_new_player.add_argument('playername', type=str, help="The name of the new player.")
     parser_new_player.add_argument('--startingxp', metavar="xp", type=int, help="How much XP should the player start with", default=300)
 
-    parser_bonus_exp = subparsers.add_parser("bonus", help="Give an out of band bonus to a player")
+    parser_bonus_exp = subparsers.add_parser("bonus", help="Give an out of band xp bonus to a player")
     parser_bonus_exp.add_argument('playername', type=str, help="The name of the player.")
     parser_bonus_exp.add_argument('bonusxp', type=int, help="How much xp bonus to give.")
+
+    parser_levelup = subparsers.add_parser("levelup", help="Give an out of band level bonus to a player")
+    parser_levelup.add_argument('playername', type=str, help="The name of the player.")
+    parser_levelup.add_argument('levels', type=int, help="How many bonus levels to give.")
+    parser_levelup.add_argument('preserve', type=bool, help="Preserve level progress as a percentage.")
 
     parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
     parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
@@ -187,6 +193,15 @@ def main() -> None:
         list_previous_update()
         return
 
+    elif parsed_args.command == "levelup":
+        add_levelup_event(
+            player_name=parsed_args.playername,
+            level=parsed_args.level,
+            preserve=parsed_args.preserve,
+        )
+        list_previous_update()
+        return
+
     elif parsed_args.command == "list":
         list_current_state(parsed_args.playername)
         return
@@ -212,7 +227,7 @@ def add_event(event: Any) -> None:
 
 
 def get_event_list() -> List[Any]:
-    if not os.path.exists(EVENTSOURCE_FILE): 
+    if not os.path.exists(EVENTSOURCE_FILE):
         with open(EVENTSOURCE_FILE, "w") as f:
             json.dump([], f)
 
@@ -262,6 +277,19 @@ def add_bonus_exp_event(
         "type": "bonusexp",
         "name": player_name,
         "bonusexp": bonus_exp,
+    })
+
+def add_levelup_event(
+    player_name: str,
+    levels: int,
+    preserve: bool,
+) -> None:
+    # TODO: Validate that this player exists
+    add_event({
+        "type": "levelup",
+        "name": player_name,
+        "levels": levels,
+        "preserve": preserve,
     })
 
 
@@ -332,6 +360,8 @@ def process_event(event: Any, state: State) -> List[str]:
         return process_new_player_event(event, state)
     elif event["type"] == "bonusexp":
         return process_bonus_exp_event(event, state)
+    elif event["type"] == "levelup":
+        return process_levelup_event(event, state)
     elif event["type"] == "sessionexp":
         return process_session_exp_event(event, state)
     else:
@@ -374,6 +404,48 @@ def process_bonus_exp_event(event: Any, state: State) -> List[str]:
             direction="gained" if event["bonusexp"] > 0 else "lost",
             exp=abs(event["bonusexp"]),
             level=current_player_level,
+        )
+    ]
+
+
+################################################################################
+def process_levelup_event(event: Any, state: State) -> List[str]:
+    name = event["name"]
+    level_change = event["levels"]
+    current_exp = state.players[name]
+    current_level = get_level_from_exp(current_exp)
+
+    if name not in state.players:
+        print("WARNING: Player not found for bonus", event)
+        return []
+
+    # TODO: explicitly support level penalties.
+    if level_change < 1:
+        print("WARNING: Levelup levels less than 1", event)
+        return []
+
+    # TODO: should this level up as high as possible or error out?
+    if current_level + level_change >= MAX_LEVEL:
+        print("WARNING: Levelup would exceed max", event)
+        return []
+
+    current_level_min = level_exp_caps[current_level - 1] # Always at least lvl 1.
+    current_level_max = level_exp_caps[current_level]
+    intended_level_min = level_exp_caps[current_level + level_change - 1]
+    intended_level_max = level_exp_caps[current_level + level_change]
+
+    preserved_exp = 0
+    if event["preserve"]:
+        progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
+        preserved_exp = progress * (intended_level_max - intended_level_min)
+
+    state.players[name] += intended_level_min + preserved_exp
+
+    return [
+        "{name} gained {levels}levels. They are currently at Level {level}".format(
+            name=name,
+            levels=level_change,
+            level=get_level_from_exp(state.players[event["name"]]),
         )
     ]
 
@@ -611,7 +683,7 @@ def get_level_from_exp(exp: int) -> int:
     for i, level_exp_cap in enumerate(level_exp_caps):
         if exp < level_exp_cap:
             return i
-    return 20
+    return MAX_LEVEL
 
 
 ################################################################################
