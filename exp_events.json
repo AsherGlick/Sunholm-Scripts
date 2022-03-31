@@ -1,6 +1,47 @@
 [
     {
         "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Ignar",
+            "Jimmy",
+            "Kizmet"
+        ],
+        "questlog_players": [
+            "Nala"
+        ],
+        "fastlog_players": [],
+        "date": "2022/03/30-19:04:05"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10800",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Jimmy"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Kizmet",
+            "Nala"
+        ],
+        "date": "2022/03/23-19:29:57"
+    },
+    {
+        "type": "newplayer",
+        "name": "Nala",
+        "exp": 300,
+        "date": "2022/03/23-19:24:32"
+    },
+    {
+        "type": "newplayer",
+        "name": "Kizmet",
+        "exp": 300,
+        "date": "2022/03/23-19:24:18"
+    },
+    {
+        "type": "sessionexp",
         "exp_gained": "15%",
         "players": [
             "Maerilith",
