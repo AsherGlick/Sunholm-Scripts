@@ -412,8 +412,11 @@ def process_bonus_exp_event(event: Any, state: State) -> List[str]:
 def process_levelup_event(event: Any, state: State) -> List[str]:
     name = event["name"]
     level_change = event["levels"]
+    preserve = event["preserve"]
+
     current_exp = state.players[name]
     current_level = get_level_from_exp(current_exp)
+    target_level = current_level + level_change
 
     if name not in state.players:
         print("WARNING: Player not found for bonus", event)
@@ -425,17 +428,17 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
         return []
 
     # TODO: should this level up as high as possible or error out?
-    if current_level + level_change >= MAX_LEVEL:
+    if (target_level >= MAX_LEVEL and preserve) or (target_level > MAX_LEVEL and not preserve):
         print("WARNING: Levelup would exceed max", event)
         return []
 
     current_level_min = level_exp_caps[current_level - 1] # Always at least lvl 1.
     current_level_max = level_exp_caps[current_level]
-    intended_level_min = level_exp_caps[current_level + level_change - 1]
-    intended_level_max = level_exp_caps[current_level + level_change]
+    intended_level_min = level_exp_caps[target_level - 1]
+    intended_level_max = level_exp_caps[target_level]
 
     preserved_exp = 0
-    if event["preserve"]:
+    if preserve:
         progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
         preserved_exp = progress * (intended_level_max - intended_level_min)
 
