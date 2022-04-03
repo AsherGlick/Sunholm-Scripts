@@ -439,7 +439,7 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
         progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
         preserved_exp = progress * (intended_level_max - intended_level_min)
 
-    state.players[name] += intended_level_min + preserved_exp
+    state.players[name] = round(intended_level_min + preserved_exp)
 
     return [
         "{name} gained {levels}levels. They are currently at Level {level}".format(
