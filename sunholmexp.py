@@ -159,7 +159,7 @@ def main() -> None:
 
     parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
     parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
-    parser_player_list.add_argument('--sortby', type=str, nargs="?", default="", help="Sort output by exp or name")
+    parser_player_list.add_argument('--sortby', type=str, choices=["exp", "name"], help="Sort list output")
 
     parser_last_event = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
     # TODO, maybe an ability to print out an even more early one
@@ -311,6 +311,8 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
         player_iter = sorted(player_iter, key=lambda name: state.players[name])
     elif sortby == "name":
         player_iter = sorted(player_iter)
+    else:
+        raise ValueError(f"Output cannot be sorted by '{sortby}' ")
     for player in player_iter:
         if filter_player != "" and player != filter_player:
             continue
@@ -485,15 +487,15 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
         )
 
     autolevel_threshold = get_level_from_exp(max(state.players.values(), key=get_level_from_exp)) - DESIRED_LEVEL_WINDOW
-    shrimps = [player for player in players if player.level < autolevel_threshold]
-    jumbo_shrimps = [player for player in players if player.level >= autolevel_threshold]
-    for shrimp in shrimps:
+    autoleveled_players = [player for player in players if player.level < autolevel_threshold]
+    non_autoleveled_players = [player for player in players if player.level >= autolevel_threshold]
+    for shrimp in autoleveled_players:
         shrimp.gained_exp = exp_after_bonus_leveling(shrimp.exp)
         shrimp.leveled_up = True
-    jumbo_shrimps = divide_exp(total_exp, jumbo_shrimps)
-    bonus_exp = sum([player.gained_exp for player in jumbo_shrimps]) - total_exp
+    non_autoleveled_players = divide_exp(total_exp, non_autoleveled_players)
+    bonus_exp = sum([player.gained_exp for player in non_autoleveled_players]) - total_exp
 
-    players = sorted(shrimps + jumbo_shrimps, key=lambda shrimp: [player.name for player in players].index(shrimp.name))
+    players = sorted(autoleveled_players + non_autoleveled_players, key=lambda shrimp: [player.name for player in players].index(shrimp.name))
 
     for player in players:
         if player.should_get_quest_log_bonus_exp:
@@ -519,7 +521,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
             # jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
             output_lines.append("**{player_name} {maybe_auto}leveled up to level {new_level}** ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
                 player_name=player.name,
-                maybe_auto="auto" if player in shrimps else "",
+                maybe_auto="auto" if player in autoleveled_players else "",
                 new_level=str(player.level + 1),
                 quest_log_exp_string=quest_log_exp_string,
                 new_total_exp=str(player.exp + player.gained_exp),
