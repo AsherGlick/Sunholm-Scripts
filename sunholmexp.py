@@ -156,7 +156,7 @@ def main() -> None:
     parser_levelup = subparsers.add_parser("levelup", help="Give an out of band level bonus to a player")
     parser_levelup.add_argument('playername', type=str, help="The name of the player.")
     parser_levelup.add_argument('levels', type=int, help="How many bonus levels to give.")
-    parser_levelup.add_argument('preserve', type=bool, help="Preserve level progress as a percentage.")
+    parser_levelup.add_argument('--preserve-percentage', help="Preserve level progress as a percentage.", action='store_true')
 
     parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
     parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
@@ -196,8 +196,8 @@ def main() -> None:
     elif parsed_args.command == "levelup":
         add_levelup_event(
             player_name=parsed_args.playername,
-            level=parsed_args.level,
-            preserve=parsed_args.preserve,
+            levels=parsed_args.levels,
+            preserve_percentage=parsed_args.preserve_percentage,
         )
         list_previous_update()
         return
@@ -282,14 +282,14 @@ def add_bonus_exp_event(
 def add_levelup_event(
     player_name: str,
     levels: int,
-    preserve: bool,
+    preserve_percentage: bool,
 ) -> None:
     # TODO: Validate that this player exists
     add_event({
         "type": "levelup",
         "name": player_name,
         "levels": levels,
-        "preserve": preserve,
+        "preserve_percentage": preserve_percentage,
     })
 
 
@@ -412,7 +412,7 @@ def process_bonus_exp_event(event: Any, state: State) -> List[str]:
 def process_levelup_event(event: Any, state: State) -> List[str]:
     name = event["name"]
     level_change = event["levels"]
-    preserve = event["preserve"]
+    preserve_percentage = event["preserve_percentage"]
 
     current_exp = state.players[name]
     current_level = get_level_from_exp(current_exp)
@@ -428,7 +428,7 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
         return []
 
     # TODO: should this level up as high as possible or error out?
-    if (target_level >= MAX_LEVEL and preserve) or (target_level > MAX_LEVEL and not preserve):
+    if (target_level >= MAX_LEVEL and preserve_percentage) or (target_level > MAX_LEVEL and not preserve_percentage):
         print("WARNING: Levelup would exceed max", event)
         return []
 
@@ -438,17 +438,20 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
     intended_level_max = level_exp_caps[target_level]
 
     preserved_exp = 0
-    if preserve:
+    if preserve_percentage:
         progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
         preserved_exp = progress * (intended_level_max - intended_level_min)
 
-    state.players[name] = round(intended_level_min + preserved_exp)
+    target_exp = round(intended_level_min + preserved_exp)
+    gained_exp = target_exp - state.players[name]
+    state.players[name] = target_exp
 
     return [
-        "{name} gained {levels}levels. They are currently at Level {level}".format(
+        "{name} gained {levels} levels (from {gained_exp}exp). They are currently at Level {level}".format(
             name=name,
             levels=level_change,
-            level=get_level_from_exp(state.players[event["name"]]),
+            gained_exp=gained_exp,
+            level=get_level_from_exp(state.players[name]),
         )
     ]
 

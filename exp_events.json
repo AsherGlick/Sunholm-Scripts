@@ -117,7 +117,7 @@
         "type": "levelup",
         "name": "Maerilith",
         "levels": 1,
-        "preserve": true,
+        "preserve_percentage": true,
         "date": "2022/03/08-00:27:36"
     },
     {
