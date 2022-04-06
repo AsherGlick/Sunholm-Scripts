@@ -330,7 +330,7 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
         player_iter = sorted(player_iter, key=lambda name: state.players[name])
     elif sortby == "name":
         player_iter = sorted(player_iter)
-    elif sortby != "":
+    elif sortby:
         raise ValueError(f"Output cannot be sorted by '{sortby}' ")
     for player in player_iter:
         if filter_player != "" and player != filter_player:
@@ -427,8 +427,7 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
     preserve_percentage = event["preserve_percentage"]
 
     current_exp = state.players[name]
-    current_level = get_level_from_exp(current_exp)
-    target_level = current_level + level_change
+    target_level = get_level_from_exp(current_exp) + level_change
 
     if name not in state.players:
         print("WARNING: Player not found for bonus", event)
@@ -444,19 +443,8 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
         print("WARNING: Levelup would exceed max", event)
         return []
 
-    current_level_min = level_exp_caps[current_level - 1] # Always at least lvl 1.
-    current_level_max = level_exp_caps[current_level]
-    intended_level_min = level_exp_caps[target_level - 1]
-    intended_level_max = level_exp_caps[target_level]
-
-    preserved_exp = 0
-    if preserve_percentage:
-        progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
-        preserved_exp = progress * (intended_level_max - intended_level_min)
-
-    target_exp = round(intended_level_min + preserved_exp)
-    gained_exp = target_exp - state.players[name]
-    state.players[name] = target_exp
+    gained_exp = exp_needed_for_bonus_levels(current_exp=current_exp, level_change=level_change, preserve=preserve_percentage)
+    state.players[name] += gained_exp
 
     return [
         "{name} gained {levels} levels (from {gained_exp}exp). They are currently at Level {level}".format(
@@ -483,7 +471,7 @@ class LevelingUpPlayer:
 
 # Total amount of experience needed to make a character gain level_change levels instantly
 # If preserve is set, their percentage progress from their current level carries over
-def exp_after_bonus_leveling(current_exp: int, level_change: int = 1, preserve: bool = False) -> int:
+def exp_needed_for_bonus_levels(current_exp: int, level_change: int = 1, preserve: bool = False) -> int:
     current_level = get_level_from_exp(current_exp)
     intended_level = current_level + level_change
     if intended_level > MAX_LEVEL:
@@ -496,7 +484,7 @@ def exp_after_bonus_leveling(current_exp: int, level_change: int = 1, preserve: 
     preserved_exp = 0
     if preserve:
         progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
-        preserved_exp = progress * (intended_level_max - intended_level_min)
+        preserved_exp = math.ceil(progress * (intended_level_max - intended_level_min))
 
     return (intended_level_min + preserved_exp) - current_exp
 
@@ -559,7 +547,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
     autoleveled_players = [player for player in players if player.level < autolevel_threshold]
     non_autoleveled_players = [player for player in players if player.level >= autolevel_threshold]
     for autoleveled_player in autoleveled_players:
-        autoleveled_player.gained_exp = exp_after_bonus_leveling(autoleveled_player.exp)
+        autoleveled_player.gained_exp = exp_needed_for_bonus_levels(current_exp=autoleveled_player.exp)
         autoleveled_player.leveled_up = True
     non_autoleveled_players = divide_exp(total_exp, non_autoleveled_players)
     bonus_exp = sum([player.gained_exp for player in non_autoleveled_players]) - total_exp
