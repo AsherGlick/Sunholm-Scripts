@@ -164,8 +164,6 @@ def main() -> None:
     parser_last_event = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
     # TODO, maybe an ability to print out an even more early one
 
-    parser_dryrun = subparsers.add_parser("dryrun", help="Process all events but print nothing")
-
     parsed_args = parser.parse_args()
 
 
@@ -201,12 +199,6 @@ def main() -> None:
 
     elif parsed_args.command == "last":
         list_previous_update()
-        return
-
-    elif parsed_args.command == "dryrun":
-        state = State()
-        for event in get_event_list():
-            process_event(event, state)
         return
 
     print("Error, a command must be chosen. Use --help to see commands")
@@ -311,7 +303,7 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
         player_iter = sorted(player_iter, key=lambda name: state.players[name])
     elif sortby == "name":
         player_iter = sorted(player_iter)
-    else:
+    elif sortby != "":
         raise ValueError(f"Output cannot be sorted by '{sortby}' ")
     for player in player_iter:
         if filter_player != "" and player != filter_player:
@@ -489,13 +481,13 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
     autolevel_threshold = get_level_from_exp(max(state.players.values(), key=get_level_from_exp)) - DESIRED_LEVEL_WINDOW
     autoleveled_players = [player for player in players if player.level < autolevel_threshold]
     non_autoleveled_players = [player for player in players if player.level >= autolevel_threshold]
-    for shrimp in autoleveled_players:
-        shrimp.gained_exp = exp_after_bonus_leveling(shrimp.exp)
-        shrimp.leveled_up = True
+    for autoleveled_player in autoleveled_players:
+        autoleveled_player.gained_exp = exp_after_bonus_leveling(autoleveled_player.exp)
+        autoleveled_player.leveled_up = True
     non_autoleveled_players = divide_exp(total_exp, non_autoleveled_players)
     bonus_exp = sum([player.gained_exp for player in non_autoleveled_players]) - total_exp
 
-    players = sorted(autoleveled_players + non_autoleveled_players, key=lambda shrimp: [player.name for player in players].index(shrimp.name))
+    players = sorted(autoleveled_players + non_autoleveled_players, key=lambda player: [player.name for player in players].index(player.name))
 
     for player in players:
         if player.should_get_quest_log_bonus_exp:
