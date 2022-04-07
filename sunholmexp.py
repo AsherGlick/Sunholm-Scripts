@@ -547,7 +547,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
     autoleveled_players = [player for player in players if player.level < autolevel_threshold]
     non_autoleveled_players = [player for player in players if player.level >= autolevel_threshold]
     for autoleveled_player in autoleveled_players:
-        autoleveled_player.gained_exp = exp_needed_for_bonus_levels(current_exp=autoleveled_player.exp)
+        autoleveled_player.gained_exp = exp_needed_for_bonus_levels(current_exp=autoleveled_player.exp, preserve=True)
         autoleveled_player.leveled_up = True
     non_autoleveled_players = divide_exp(total_exp, non_autoleveled_players)
     bonus_exp = sum([player.gained_exp for player in non_autoleveled_players]) - total_exp
