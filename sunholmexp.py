@@ -124,6 +124,10 @@ quest_log_gold_map = [
 
 MAX_LEVEL = 20
 
+# Ideally, the most levels anyone will be behind the highest level in the faction
+# If you are outside this window you will be automatically granted 1 level after each session
+DESIRED_LEVEL_WINDOW = 5
+
 # We are rewriting sunholmexp.py as an event source model
 
 EVENTSOURCE_FILE="exp_events.json"
@@ -160,6 +164,7 @@ def main() -> None:
 
     parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
     parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
+    parser_player_list.add_argument('--sortby', type=str, choices=["exp", "name"], help="Sort list output")
 
     parser_last_event = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
     # TODO, maybe an ability to print out an even more early one
@@ -203,7 +208,7 @@ def main() -> None:
         return
 
     elif parsed_args.command == "list":
-        list_current_state(parsed_args.playername)
+        list_current_state(parsed_args.playername, parsed_args.sortby)
         return
 
     elif parsed_args.command == "last":
@@ -312,7 +317,7 @@ def list_previous_update(n=0) -> None:
     print("\n".join(process_event(events[n-1], state)))
 
 
-def list_current_state(filter_player: str="") -> None: # todo this is not the right function but I am co-opting it for testing
+def list_current_state(filter_player: str="", sortby: str="") -> None: # todo this is not the right function but I am co-opting it for testing
     events = get_event_list()
 
     state = State()
@@ -320,7 +325,14 @@ def list_current_state(filter_player: str="") -> None: # todo this is not the ri
     for event in events:
         process_event(event, state)
 
-    for player in state.players:
+    player_iter = state.players.keys()
+    if sortby == "exp":
+        player_iter = sorted(player_iter, key=lambda name: state.players[name])
+    elif sortby == "name":
+        player_iter = sorted(player_iter)
+    elif sortby:
+        raise ValueError(f"Output cannot be sorted by '{sortby}' ")
+    for player in player_iter:
         if filter_player != "" and player != filter_player:
             continue
 
@@ -415,8 +427,7 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
     preserve_percentage = event["preserve_percentage"]
 
     current_exp = state.players[name]
-    current_level = get_level_from_exp(current_exp)
-    target_level = current_level + level_change
+    target_level = get_level_from_exp(current_exp) + level_change
 
     if name not in state.players:
         print("WARNING: Player not found for bonus", event)
@@ -432,19 +443,8 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
         print("WARNING: Levelup would exceed max", event)
         return []
 
-    current_level_min = level_exp_caps[current_level - 1] # Always at least lvl 1.
-    current_level_max = level_exp_caps[current_level]
-    intended_level_min = level_exp_caps[target_level - 1]
-    intended_level_max = level_exp_caps[target_level]
-
-    preserved_exp = 0
-    if preserve_percentage:
-        progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
-        preserved_exp = progress * (intended_level_max - intended_level_min)
-
-    target_exp = round(intended_level_min + preserved_exp)
-    gained_exp = target_exp - state.players[name]
-    state.players[name] = target_exp
+    gained_exp = exp_needed_for_bonus_levels(current_exp=current_exp, level_change=level_change, preserve=preserve_percentage)
+    state.players[name] += gained_exp
 
     return [
         "{name} gained {levels} levels (from {gained_exp}exp). They are currently at Level {level}".format(
@@ -469,6 +469,25 @@ class LevelingUpPlayer:
     leveled_up: bool = False
     quest_log_bonus_gold: int = 0
 
+# Total amount of experience needed to make a character gain level_change levels instantly
+# If preserve is set, their percentage progress from their current level carries over
+def exp_needed_for_bonus_levels(current_exp: int, level_change: int = 1, preserve: bool = False) -> int:
+    current_level = get_level_from_exp(current_exp)
+    intended_level = current_level + level_change
+    if intended_level > MAX_LEVEL:
+        print("Cannot increase a level beyond {MAX_LEVEL}".format(MAX_LEVEL=MAX_LEVEL))
+        exit(1)
+
+    current_level_min, current_level_max = level_exp_caps[current_level - 1], level_exp_caps[current_level]
+    intended_level_min, intended_level_max = level_exp_caps[current_level + level_change - 1], level_exp_caps[current_level + level_change]
+
+    preserved_exp = 0
+    if preserve:
+        progress = (current_exp - current_level_min) / (current_level_max - current_level_min)
+        preserved_exp = math.ceil(progress * (intended_level_max - intended_level_min))
+
+    return (intended_level_min + preserved_exp) - current_exp
+
 def process_session_exp_event(event: Any, state: State) -> List[str]:
     # Make sure random numbers are generate the same for this event
     random.seed(event["date"])
@@ -490,8 +509,6 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
 
 
     players: List[LevelingUpPlayer] = []
-
-    quest_log_player_gold = {}
 
     # Init Player State
     for player in event["players"]:
@@ -526,9 +543,16 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
             )
         )
 
-    players = divide_exp(total_exp, players)
+    autolevel_threshold = get_level_from_exp(max(state.players.values(), key=get_level_from_exp)) - DESIRED_LEVEL_WINDOW
+    autoleveled_players = [player for player in players if player.level < autolevel_threshold]
+    non_autoleveled_players = [player for player in players if player.level >= autolevel_threshold]
+    for autoleveled_player in autoleveled_players:
+        autoleveled_player.gained_exp = exp_needed_for_bonus_levels(current_exp=autoleveled_player.exp)
+        autoleveled_player.leveled_up = True
+    non_autoleveled_players = divide_exp(total_exp, non_autoleveled_players)
+    bonus_exp = sum([player.gained_exp for player in non_autoleveled_players]) - total_exp
 
-    bonus_exp = sum([player.gained_exp for player in players]) - total_exp
+    players = sorted(autoleveled_players + non_autoleveled_players, key=lambda player: [player.name for player in players].index(player.name))
 
     for player in players:
         if player.should_get_quest_log_bonus_exp:
@@ -552,8 +576,9 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
         if player.leveled_up:
             # TODO: should be updated to be visually nicer as well.
             # jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
-            output_lines.append("**{player_name} leveled up to level {new_level}** ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
+            output_lines.append("**{player_name} {maybe_auto}leveled up to level {new_level}** ({quest_log_exp_string}{new_total_exp}xp total). {remaining_exp_string}.".format(
                 player_name=player.name,
+                maybe_auto="auto" if player in autoleveled_players else "",
                 new_level=str(player.level + 1),
                 quest_log_exp_string=quest_log_exp_string,
                 new_total_exp=str(player.exp + player.gained_exp),
@@ -650,13 +675,7 @@ def divide_exp(total_exp: int, players: List[LevelingUpPlayer]) -> Any:
 
         return players
 
-    all_players_leveled_up = True
-    for player in players:
-        if not player.leveled_up:
-            all_players_leveled_up = False
-            break
-
-    if all_players_leveled_up:
+    if all(player.leveled_up for player in players):
         return players
 
     max_player_level = max([player.level for player in players])
