@@ -1,5 +1,4 @@
 import math
-import sys
 import json
 import random
 import datetime
@@ -7,6 +6,7 @@ import argparse
 import os
 from typing import Any, List, Dict
 from dataclasses import dataclass
+from collections import defaultdict
 
 ################################ Level EXP Caps ################################
 # The The amount of exp you need to be at a specific level.                    #
@@ -130,20 +130,62 @@ DESIRED_LEVEL_WINDOW = 5
 
 # We are rewriting sunholmexp.py as an event source model
 
-EVENTSOURCE_FILE="exp_events.json"
+EVENTSOURCE_FILE = "exp_events.json"
+
+FACTION_PLAYER_NAME = "The Ruby Counsel Coffers"
 
 class State:
-    players: Dict[str,int] = {}
+    def __init__(self):
+        # player -> attribute -> quantity
+        # Attribute can be experience points, gold, items, or other tags
+        self.player_attrs: Dict[str, Dict[str,int]] = defaultdict(lambda: defaultdict(lambda: 0))
+
+    def has_player(self, player: str) -> bool:
+        return player in self.player_attrs
+
+    def get_attr(self, player: str, attr: str) -> int:
+        return self.player_attrs[player][attr]
+
+    def add_attr(self, player: str, attr: str, n: int):
+        self.player_attrs[player][attr] += n
+
+    def set_attr(self, player: str, attr: str, n: int):
+        self.player_attrs[player][attr] = n
+
+    def move_attr(self, sender: str, recver: str, attr: str, n: int):
+        self.add_attr(sender, attr, -n)
+        self.add_attr(recver, attr, n)
+
+    def get_gold(self, player: str) -> int:
+        return self.get_attr(player, "gold")
+
+    def add_gold(self, player: str, gold: int):
+        self.add_attr(player, "gold", gold)
+
+    def set_gold(self, player: str, gold: int):
+        self.set_attr(player, "gold", gold)
+
+    def move_gold(self, sender: str, recver: str, gold: int):
+        self.move_attr(sender, recver, "gold", gold)
+
+    def get_exp(self, player: str) -> int:
+        return self.get_attr(player, "exp")
+
+    def add_exp(self, player: str, exp: int):
+        self.add_attr(player, "exp", exp)
+
+    def set_exp(self, player: str, exp: int):
+        self.set_attr(player, "exp", exp)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="A Tool For Managing and Leveling Sunholm Players")
 
-
     subparsers = parser.add_subparsers(help="Commands", dest="command")
 
-    parser_session_exp = subparsers.add_parser("exp", help="Grant a set of players exp for a session.")
+    parser_session_exp = subparsers.add_parser("session", help="Grant a set of players exp and gold for a session.")
     parser_session_exp.add_argument('exp', type=str, help="The Amount of exp that was gained this session")
+    parser_session_exp.add_argument('gold', type=str, default="0", help="The Amount of gold that was gained this session")
     parser_session_exp.add_argument('-p', '--player', metavar="player", type=str, action='append', default=[], help="A player who participated this session.")
     parser_session_exp.add_argument('-q', '--questlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session and participated in this one.")
     parser_session_exp.add_argument('-f', '--fastlog', metavar="player", type=str, action='append', default=[], help="A player who wrote a quest log for last session within a time limit and participated in this one.")
@@ -162,6 +204,14 @@ def main() -> None:
     parser_levelup.add_argument('levels', type=int, help="How many bonus levels to give.")
     parser_levelup.add_argument('--preserve-percentage', help="Preserve level progress as a percentage.", action='store_true')
 
+    parser_give = subparsers.add_parser("give", help="Grant a player a number of gp, items, or attributes")
+    parser_give.add_argument('recverplayer', type=str, help="The name of the recipient player.")
+    parser_give.add_argument('count', type=str, help="The amount of the thing to be given.")
+    parser_give.add_argument('gift', type=str, help="The name of the thing to be given.")
+    from_group = parser_give.add_mutually_exclusive_group()
+    from_group.add_argument('--from-faction', help="Whether to take this gift from the faction", action='store_true')
+    from_group.add_argument('--from', metavar="player", type=str, help="The name of the sender player to take from.")
+
     parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
     parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
     parser_player_list.add_argument('--sortby', type=str, choices=["exp", "name"], help="Sort list output")
@@ -173,22 +223,33 @@ def main() -> None:
 
 
     # print(parsed_args)
-    if parsed_args.command == "exp":
-        add_exp_event(
+    if parsed_args.command == "session":
+        add_session_event(
             exp_gained=parsed_args.exp,
+            gold_gained=parsed_args.gold,
             attending_players=parsed_args.player,
             questlog_players=parsed_args.questlog,
             fastlog_players=parsed_args.fastlog,
         )
         list_previous_update()
-        return
+
+    elif parsed_args.command == "give":
+        add_gift_event(
+            recver_player=parsed_args.recverplayer,
+            count=parsed_args.count,
+            gift=parsed_args.gift,
+            sender_player=FACTION_PLAYER_NAME if parsed_args.from_faction else getattr(parsed_args, "from"),
+            )
+        list_previous_update()
 
     elif parsed_args.command == "new":
+        if parsed_args.playername == FACTION_PLAYER_NAME:
+            print(f"Player added with illegal name {FACTION_PLAYER_NAME}, exiting")
+            exit(1)
         add_new_player_event(
             player_name=parsed_args.playername,
             starting_exp=parsed_args.startingxp)
         list_previous_update()
-        return
 
     elif parsed_args.command == "bonus":
         add_bonus_exp_event(
@@ -196,7 +257,6 @@ def main() -> None:
             bonus_exp=parsed_args.bonusxp
         )
         list_previous_update()
-        return
 
     elif parsed_args.command == "levelup":
         add_levelup_event(
@@ -205,17 +265,15 @@ def main() -> None:
             preserve_percentage=parsed_args.preserve_percentage,
         )
         list_previous_update()
-        return
 
     elif parsed_args.command == "list":
         list_current_state(parsed_args.playername, parsed_args.sortby)
-        return
 
     elif parsed_args.command == "last":
         list_previous_update()
-        return
 
-    print("Error, a command must be chosen. Use --help to see commands")
+    else:
+        print("Error, a command must be chosen. Use --help to see commands")
 
 
 def add_event(event: Any) -> None:
@@ -242,8 +300,9 @@ def get_event_list() -> List[Any]:
     return eventsource
 
 
-def add_exp_event(
+def add_session_event(
     exp_gained: str,
+    gold_gained: str,
     attending_players: List[str],
     questlog_players: List[str],
     fastlog_players: List[str]
@@ -255,12 +314,29 @@ def add_exp_event(
         exit(1)
 
     add_event({
-        "type": "sessionexp",
+        "type": "sessionexp", # ideally type is "session" but in the spirit of the event source model...
         "exp_gained": exp_gained,
+        "gold_gained": gold_gained,
         "players": attending_players,
         "questlog_players": questlog_players,
         "fastlog_players": fastlog_players,
     })
+
+def add_gift_event(
+    recver_player: str,
+    count: int,
+    gift: str,
+    sender_player: str,
+) -> None:
+    gift_event = {
+        "type": "gift",
+        "recver_player": recver_player,
+        "count": count,
+        "gift": gift,
+    }
+    if sender_player:
+        gift_event["sender_player"] = sender_player
+    add_event(gift_event)
 
 def add_new_player_event(
     player_name: str,
@@ -304,9 +380,7 @@ def list_previous_update(n=0) -> None:
     if n <= 0:
         n = len(events)+n
 
-    output_string = "Showing the result of event {n} of {total_count} events.".format(
-        n=n,
-        total_count=len(events))
+    output_string = f"Showing the result of event {n} of {len(events)} events."
     print(output_string)
     print("="*len(output_string))
 
@@ -325,9 +399,9 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
     for event in events:
         process_event(event, state)
 
-    player_iter = state.players.keys()
+    player_iter = state.player_attrs.keys()
     if sortby == "exp":
-        player_iter = sorted(player_iter, key=lambda name: state.players[name])
+        player_iter = sorted(player_iter, key=lambda name: state.get_exp(name))
     elif sortby == "name":
         player_iter = sorted(player_iter)
     elif sortby:
@@ -337,17 +411,12 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
             continue
 
 
-        exp = state.players[player]
+        exp = state.get_exp(player)
         level = get_level_from_exp(exp)
 
         remaining_exp = remaining_exp_string(level, exp)
 
-        print("{player} {exp}xp (Level {level}) {remaining_exp}".format(
-            player=player,
-            exp=exp,
-            level=level,
-            remaining_exp=remaining_exp
-        ))
+        print(f"{player} {exp}xp (Level {level}) {remaining_exp}")
 
 
 ################################################################################
@@ -357,7 +426,7 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
 def get_party_level_percentage(state: State, players: List[str], percentage: int) -> int:
     total_level_exp = 0
     for player in players:
-        exp = state.players[player]
+        exp = state.get_exp(player)
         level = get_level_from_exp(exp)
 
         level_exp = level_exp_caps[level] - level_exp_caps[level - 1]
@@ -374,8 +443,10 @@ def process_event(event: Any, state: State) -> List[str]:
         return process_bonus_exp_event(event, state)
     elif event["type"] == "levelup":
         return process_levelup_event(event, state)
+    elif event["type"] == "gift":
+        return process_gift_event(event, state)
     elif event["type"] == "sessionexp":
-        return process_session_exp_event(event, state)
+        return process_session_event(event, state)
     else:
         print("ERROR: Invalid Event", event)
         return []
@@ -387,28 +458,24 @@ def process_event(event: Any, state: State) -> List[str]:
 # overwritten by this event.                                                   #
 ################################################################################
 def process_new_player_event(event: Any, state: State) -> List[str]:
-    if event["name"] in state.players:
+    if state.has_player(event["name"]):
         print("WARNING: Duplicate New Players", event)
 
-    state.players[event["name"]] = event["exp"]
+    state.set_exp(event["name"], event["exp"])
 
     return [
-        "Created the new player {name} starting with {exp}xp (Level {level})".format(
-            name=event["name"],
-            exp=event["exp"],
-            level=get_level_from_exp(event["exp"])
-        )
+        f"Created the new player {event['name']} starting with {event['exp']}xp (Level {get_level_from_exp(event['exp'])})"
     ]
 
 
 ################################################################################
 def process_bonus_exp_event(event: Any, state: State) -> List[str]:
-    if event["name"] not in state.players:
+    if not state.has_player(event["name"]):
         print("WARNING: Player not found for bonus", event)
         return []
 
-    state.players[event["name"]] += event["bonusexp"]
-    current_player_level = get_level_from_exp(state.players[event["name"]])
+    state.add_exp(event["name"], event["bonusexp"])
+    current_player_level = get_level_from_exp(state.get_exp(event["name"]))
 
     return [
         "{name} {direction} {exp}xp. They are currently at Level {level}".format(
@@ -426,10 +493,10 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
     level_change = event["levels"]
     preserve_percentage = event["preserve_percentage"]
 
-    current_exp = state.players[name]
+    current_exp = state.get_exp(name)
     target_level = get_level_from_exp(current_exp) + level_change
 
-    if name not in state.players:
+    if not state.has_player(name):
         print("WARNING: Player not found for bonus", event)
         return []
 
@@ -444,18 +511,31 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
         return []
 
     gained_exp = exp_needed_for_bonus_levels(current_exp=current_exp, level_change=level_change, preserve=preserve_percentage)
-    state.players[name] += gained_exp
+    state.add_exp(name, gained_exp)
 
     return [
-        "{name} gained {levels} levels (from {gained_exp}exp). They are currently at Level {level}".format(
-            name=name,
-            levels=level_change,
-            gained_exp=gained_exp,
-            level=get_level_from_exp(state.players[name]),
-        )
+        f"{name} gained {level_change} levels (from {gained_exp}exp). They are currently at Level {get_level_from_exp(state.get_exp(name))}"
     ]
 
 
+################################################################################
+def process_gift_event(event: Any, state: State) -> List[str]:
+    output_lines = []
+
+    recver = event["recver_player"]
+    count = int(event["count"])
+    gift = event["gift"]
+
+    state.add_attr(recver, gift, count)
+    output_lines.append(
+        f"Granted {count} units of {gift} to {recver}, who now has {state.get_attr(recver, gift)} units of {gift}",
+    )
+    if "sender_player" in event:
+        sender = event["sender_player"]
+        state.add_attr(sender, gift, -count)
+        output_lines.append(f"    This gift came from {sender}, who now has {state.get_attr(sender, gift)} units of {gift}")
+
+    return output_lines
 
 
 @dataclass
@@ -467,6 +547,7 @@ class LevelingUpPlayer:
     quest_log_bonus_exp: int = 0
     gained_exp: int = 0
     leveled_up: bool = False
+    gold_reward: int = 0
     quest_log_bonus_gold: int = 0
 
 # Total amount of experience needed to make a character gain level_change levels instantly
@@ -475,7 +556,7 @@ def exp_needed_for_bonus_levels(current_exp: int, level_change: int = 1, preserv
     current_level = get_level_from_exp(current_exp)
     intended_level = current_level + level_change
     if intended_level > MAX_LEVEL:
-        print("Cannot increase a level beyond {MAX_LEVEL}".format(MAX_LEVEL=MAX_LEVEL))
+        print(f"Cannot increase a level beyond {MAX_LEVEL}")
         exit(1)
 
     current_level_min, current_level_max = level_exp_caps[current_level - 1], level_exp_caps[current_level]
@@ -488,9 +569,11 @@ def exp_needed_for_bonus_levels(current_exp: int, level_change: int = 1, preserv
 
     return (intended_level_min + preserved_exp) - current_exp
 
-def process_session_exp_event(event: Any, state: State) -> List[str]:
+def process_session_event(event: Any, state: State) -> List[str]:
     # Make sure random numbers are generate the same for this event
     random.seed(event["date"])
+
+    all_player_names = event["players"] + event["questlog_players"] + event["fastlog_players"]
 
     exp_gain_chunks = event["exp_gained"].split("+")
 
@@ -500,7 +583,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
         if exp_gain_chunk.strip()[-1] == "%":
             total_exp += get_party_level_percentage(
                 state,
-                event["players"] + event["questlog_players"] + event["fastlog_players"],
+                all_player_names,
                 int(exp_gain_chunk.strip()[:-1])
             )
         else:
@@ -510,40 +593,57 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
 
     players: List[LevelingUpPlayer] = []
 
+    total_gold_reward = 0
+    player_gold_reward = 0
+    faction_gold_reward = 0
+
+    if "gold_gained" in event:
+        # Distribute gold between players evenly with a faction tax
+        total_gold_reward = sum(map(int, event["gold_gained"].split("+")))
+        gold_left = total_gold_reward
+        faction_gold_reward = gold_left // 5 # Hardcoded 20% faction fee for session gold rewards
+        gold_left -= faction_gold_reward
+        player_gold_reward = gold_left // len(all_player_names)
+        gold_left -= player_gold_reward * len(all_player_names)
+        faction_gold_reward += gold_left # Players should all get equal gold; remainders sent to faction
+
     # Init Player State
     for player in event["players"]:
         players.append(
             LevelingUpPlayer(
                 name=player,
-                exp=state.players[player],
-                level=get_level_from_exp(state.players[player]),
+                exp=state.get_exp(player),
+                level=get_level_from_exp(state.get_exp(player)),
+                gold_reward=player_gold_reward
             )
         )
 
     for player in event["questlog_players"]:
-        player_level: int = get_level_from_exp(state.players[player])
+        player_level: int = get_level_from_exp(state.get_exp(player))
         players.append(
             LevelingUpPlayer(
                 name=player,
-                exp=state.players[player],
-                level=get_level_from_exp(state.players[player]),
+                exp=state.get_exp(player),
+                level=get_level_from_exp(state.get_exp(player)),
+                gold_reward=player_gold_reward,
                 quest_log_bonus_gold=bonus_gold_for_quest_log(player_level),
             )
         )
 
     for player in event["fastlog_players"]:
-        player_level: int = get_level_from_exp(state.players[player])
+        player_level: int = get_level_from_exp(state.get_exp(player))
         players.append(
             LevelingUpPlayer(
                 name=player,
-                exp=state.players[player],
+                exp=state.get_exp(player),
                 level=player_level,
+                gold_reward=player_gold_reward,
                 quest_log_bonus_gold=bonus_gold_for_quest_log(player_level),
                 should_get_quest_log_bonus_exp=True,
             )
         )
 
-    autolevel_threshold = get_level_from_exp(max(state.players.values(), key=get_level_from_exp)) - DESIRED_LEVEL_WINDOW
+    autolevel_threshold = get_level_from_exp(max([state.get_exp(player) for player in state.player_attrs], key=get_level_from_exp)) - DESIRED_LEVEL_WINDOW
     autoleveled_players = [player for player in players if player.level < autolevel_threshold]
     non_autoleveled_players = [player for player in players if player.level >= autolevel_threshold]
     for autoleveled_player in autoleveled_players:
@@ -570,9 +670,7 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
     for player in players:
         quest_log_exp_string = ""
         if player.quest_log_bonus_exp > 0:
-            quest_log_exp_string = " Including a {exp}xp bonus from a fast quest log".format(
-                exp=str(player.quest_log_bonus_exp)
-            )
+            quest_log_exp_string = f" Including a {player.quest_log_bonus_exp}xp bonus from a fast quest log"
         if player.leveled_up:
             # TODO: should be updated to be visually nicer as well.
             # jimmy leveled up to level 5 (6500xp total). 0/7500xp through level 5 (7500xp remaining).
@@ -599,30 +697,26 @@ def process_session_exp_event(event: Any, state: State) -> List[str]:
                 exp_within_level=str(current_exp - level_exp_caps[player.level - 1]),
             ))
 
-
-        if player.quest_log_bonus_gold > 0:
-            output_lines.append("     {player_name} also received {received_gold}Gp ({gold_multiplier} x 1d{gold_dice_size}) for their quest log.".format(
-                player_name=player.name,
-                received_gold=str(player.quest_log_bonus_gold),
-                gold_multiplier=str(quest_log_gold_map[player.level - 1]["multiplier"]),
-                gold_dice_size=str(quest_log_gold_map[player.level - 1]["dice_size"]),
-            ))
+        if player_gold_reward + player.quest_log_bonus_gold > 0:
+            output_line = f"     {player.name} also received {player_gold_reward + player.quest_log_bonus_gold}Gp total"
+            if player.quest_log_bonus_gold > 0:
+                output_line += f", including {player.quest_log_bonus_gold}Gp ({quest_log_gold_map[player.level - 1]['multiplier']} x 1d{quest_log_gold_map[player.level - 1]['dice_size']}) for their quest log."
+            output_lines.append(output_line)
 
         output_lines.append("")
 
-    output_lines.append("Total Exp: {total_exp}".format(
-        total_exp=total_exp,
-    ))
+    output_lines.append(f"Total Exp: {total_exp}")
+    output_lines.append(f"Bonus Exp: {bonus_exp} ({str(bonus_exp / len(players))} per player)")
 
-    output_lines.append("Bonus Exp: {bonus_exp} ({per_player} per player)".format(
-        bonus_exp=bonus_exp,
-        per_player=str(bonus_exp / len(players))
-    ))
+    if total_gold_reward > 0:
+        output_lines.append("")
+        output_lines.append(f"Total Gold: {total_gold_reward}")
+        output_lines.append(f"    The party contributed {faction_gold_reward}Gp to the faction coffers, which now contains {state.get_gold(FACTION_PLAYER_NAME) + faction_gold_reward}Gp")
 
-
-
+    state.add_gold(FACTION_PLAYER_NAME, faction_gold_reward)
     for player in players:
-        state.players[player.name] = player.exp + player.gained_exp
+        state.add_exp(player.name, player.gained_exp)
+        state.add_gold(player.name, player.gold_reward + player.quest_log_bonus_gold)
 
     return output_lines
 
