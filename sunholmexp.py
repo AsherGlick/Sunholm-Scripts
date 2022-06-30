@@ -132,13 +132,21 @@ DESIRED_LEVEL_WINDOW = 5
 
 EVENTSOURCE_FILE = "exp_events.json"
 
-FACTION_PLAYER_NAME = "The Ruby Counsel Coffers"
+# Faux player name to represent the faction's coffers
+FACTION_PLAYER_NAME = "_RCC_"
 
 class State:
     def __init__(self):
         # player -> attribute -> quantity
         # Attribute can be experience points, gold, items, or other tags
-        self.player_attrs: Dict[str, Dict[str,int]] = defaultdict(lambda: defaultdict(lambda: 0))
+        # We need to add the faux faction player here since it never actually joins the campaign
+        self.player_attrs: Dict[str, Dict[str,int]] = {FACTION_PLAYER_NAME: defaultdict(lambda: 0)}
+
+    # Make the player level of nested dict a not-defaultdict so players must be explicitly added
+    # If an unknown player is referenced in a get/set/move method, a KeyError will be raised
+    def add_player(self, player: str):
+        assert player not in self.player_attrs
+        self.player_attrs[player] = defaultdict(lambda: 0)
 
     def has_player(self, player: str) -> bool:
         return player in self.player_attrs
@@ -205,12 +213,10 @@ def main() -> None:
     parser_levelup.add_argument('--preserve-percentage', help="Preserve level progress as a percentage.", action='store_true')
 
     parser_give = subparsers.add_parser("give", help="Grant a player a number of gp, items, or attributes")
-    parser_give.add_argument('recverplayer', type=str, help="The name of the recipient player.")
+    parser_give.add_argument('recverplayer', type=str, help=f"The name of the recipient player, or '{FACTION_PLAYER_NAME}' if the gift is being placed in the faction coffers.")
     parser_give.add_argument('count', type=str, help="The amount of the thing to be given.")
     parser_give.add_argument('gift', type=str, help="The name of the thing to be given.")
-    from_group = parser_give.add_mutually_exclusive_group()
-    from_group.add_argument('--from-faction', help="Whether to take this gift from the faction", action='store_true')
-    from_group.add_argument('--from', metavar="player", type=str, help="The name of the sender player to take from.")
+    parser_give.add_argument('--from', metavar="player", type=str, help=f"The name of the sender player to take from, or '{FACTION_PLAYER_NAME}' if the gift is being taken from the faction coffers.")
 
     parser_player_list = subparsers.add_parser("list", help="List current exp and levels")
     parser_player_list.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
@@ -238,7 +244,7 @@ def main() -> None:
             recver_player=parsed_args.recverplayer,
             count=parsed_args.count,
             gift=parsed_args.gift,
-            sender_player=FACTION_PLAYER_NAME if parsed_args.from_faction else getattr(parsed_args, "from"),
+            sender_player=getattr(parsed_args, "from"),
             )
         list_previous_update()
 
@@ -461,6 +467,7 @@ def process_new_player_event(event: Any, state: State) -> List[str]:
     if state.has_player(event["name"]):
         print("WARNING: Duplicate New Players", event)
 
+    state.add_player(event["name"])
     state.set_exp(event["name"], event["exp"])
 
     return [
