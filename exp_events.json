@@ -1,6 +1,85 @@
 [
     {
         "type": "sessionexp",
+        "exp_gained": "11350",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Edgar",
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [],
+        "date": "2022/09/28-21:14:54"
+    },
+    {
+        "type": "newplayer",
+        "name": "Edgar",
+        "exp": 64000,
+        "date": "2022/09/28-21:12:03"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "16200",
+        "players": [
+            "Avallach",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry"
+        ],
+        "date": "2022/09/21-19:49:45"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Nanny",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry"
+        ],
+        "date": "2022/09/14-21:32:09"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10000",
+        "players": [
+            "Kizmet",
+            "Ignar",
+            "Jimmy"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry"
+        ],
+        "date": "2022/09/14-17:26:18"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "10000",
+        "players": [
+            "Ignar",
+            "Jimmy"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry",
+            "Kizmet"
+        ],
+        "date": "2022/09/14-17:25:55"
+    },
+    {
+        "type": "newplayer",
+        "name": "Winry",
+        "exp": 12218,
+        "date": "2022/09/14-17:24:41"
+    },
+    {
+        "type": "sessionexp",
         "exp_gained": "5%",
         "players": [
             "Lelyvia",
