@@ -1,5 +1,19 @@
 [
     {
+        "type": "sessionexp",
+        "exp_gained": "9650",
+        "players": [
+            "Ignar",
+            "Edgar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny",
+            "Winry"
+        ],
+        "date": "2022/10/08-14:12:52"
+    },
+    {
         "type": "levelup",
         "name": "Winry",
         "levels": 3,
