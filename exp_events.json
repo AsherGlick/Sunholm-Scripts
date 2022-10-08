@@ -1,5 +1,12 @@
 [
     {
+        "type": "levelup",
+        "name": "Winry",
+        "levels": 3,
+        "preserve_percentage": false,
+        "date": "2022/10/08-13:30:40"
+    },
+    {
         "type": "sessionexp",
         "exp_gained": "11350",
         "players": [

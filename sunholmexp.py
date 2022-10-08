@@ -426,12 +426,12 @@ def process_levelup_event(event: Any, state: State) -> List[str]:
     level_change = event["levels"]
     preserve_percentage = event["preserve_percentage"]
 
+    if name not in state.players:
+        print("WARNING: Player {name} not found for levelup {event}".format(name=name, event=event))
+        return []
+
     current_exp = state.players[name]
     target_level = get_level_from_exp(current_exp) + level_change
-
-    if name not in state.players:
-        print("WARNING: Player not found for bonus", event)
-        return []
 
     # TODO: explicitly support level penalties.
     if level_change < 1:
