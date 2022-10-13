@@ -1,5 +1,19 @@
 [
     {
+        "type": "sessionexp",
+        "exp_gained": "22500",
+        "players": [
+            "Avallach",
+            "Jimmy",
+            "Edgar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry"
+        ],
+        "date": "2022/10/12-23:07:28"
+    },
+    {
         "type": "levelup",
         "name": "Avallach",
         "levels": 1,
