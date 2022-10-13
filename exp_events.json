@@ -1,5 +1,12 @@
 [
     {
+        "type": "levelup",
+        "name": "Avallach",
+        "levels": 1,
+        "preserve_percentage": true,
+        "date": "2022/10/12-22:33:34"
+    },
+    {
         "type": "sessionexp",
         "exp_gained": "9650",
         "players": [
