@@ -1,6 +1,27 @@
 [
     {
         "type": "sessionexp",
+        "exp_gained": "7%",
+        "players": [
+            "Avallach",
+            "Lindric",
+            "Kizmet",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry"
+        ],
+        "date": "2022/10/26-13:17:26"
+    },
+    {
+        "type": "newplayer",
+        "name": "Lindric",
+        "exp": 23329,
+        "date": "2022/10/26-13:16:42"
+    },
+    {
+        "type": "sessionexp",
         "exp_gained": "22500",
         "players": [
             "Avallach",

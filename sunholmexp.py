@@ -724,5 +724,42 @@ def adjusted_player_award(max_player_level: int, player_level: int) -> float:
     return math.pow(math.sqrt(2), max_player_level - player_level)
 
 
+# Note some of these have different heights from each other in discord's
+# default font. Leaving this function here in case we find a new font that
+# discord can properly handle.
+def percentage_bar(percentage: float, characters: int) -> str:
+    out = ""
+    bar_characters = {
+        8: "█",
+        7: "▉",
+        6: "▊",
+        5: "▋",
+        4: "▌",
+        3: "▍",
+        2: "▎",
+        1: "▏",
+        0: "░",
+    }
+
+    eights: int = int(characters * 8 * percentage)
+    print("eights", eights)
+
+    empty_characters: int = math.floor((8*characters - eights) / 8)
+
+
+    while eights > 8:
+        out += bar_characters[8]
+        eights -= 8
+
+    if eights > 0:
+        out += bar_characters[eights]
+
+    for _ in range(empty_characters):
+        out += bar_characters[0]
+
+    return out
+
+
+
 if __name__ == "__main__":
     main()
