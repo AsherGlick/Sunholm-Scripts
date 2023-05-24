@@ -1,5 +1,325 @@
 [
     {
+        "type": "newplayer",
+        "name": "Brig",
+        "exp": 165000,
+        "date": "2023/05/24-18:08:27"
+    },
+    {
+        "type": "levelup",
+        "name": "Maerilith",
+        "levels": 1,
+        "preserve_percentage": false,
+        "date": "2023/05/24-18:01:56"
+    },
+    {
+        "type": "bonusexp",
+        "name": "Maerilith",
+        "bonusexp": 5941,
+        "date": "2023/05/24-18:01:36"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "60000",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lelyvia",
+            "Lindric"
+        ],
+        "questlog_players": [
+            "Nanny"
+        ],
+        "fastlog_players": [],
+        "date": "2023/05/24-17:51:58"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "60000",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [
+            "Nanny"
+        ],
+        "fastlog_players": [],
+        "date": "2023/05/24-17:51:44"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Lelyvia",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Kizmet"
+        ],
+        "date": "2023/05/24-17:51:39"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Kizmet",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Lelyvia"
+        ],
+        "date": "2023/05/24-17:51:35"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Lelyvia"
+        ],
+        "date": "2023/05/24-17:51:27"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [
+            "Lelyvia"
+        ],
+        "fastlog_players": [],
+        "date": "2023/02/15-20:11:08"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2023/02/15-20:11:08"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2023/02/08-20:11:08"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "50000",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2023/02/08-20:11:08"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "50000",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith",
+            "Nanny"
+        ],
+        "date": "2023/02/08-20:11:08"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny"
+        ],
+        "date": "2023/02/01-20:11:08"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny",
+            "Maerilith"
+        ],
+        "date": "2023/01/25-22:55:53"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "22700",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny",
+            "Maerilith"
+        ],
+        "date": "2023/01/19-00:01:41"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5900",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Lindric"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny",
+            "Maerilith"
+        ],
+        "date": "2023/01/11-19:53:04"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "31300",
+        "players": [
+            "Avallach",
+            "Ignar",
+            "Nanny"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Maerilith"
+        ],
+        "date": "2023/01/04-19:57:58"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Nanny",
+            "Maerilith"
+        ],
+        "date": "2022/12/14-19:57:58"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "18000",
+        "players": [
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Kizmet",
+            "Winry"
+        ],
+        "date": "2022/11/30-23:54:52"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "6%",
+        "players": [
+            "Avallach",
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Kizmet",
+            "Lelyvia"
+        ],
+        "date": "2022/11/17-00:42:43"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Avallach",
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Kizmet",
+            "Winry"
+        ],
+        "date": "2022/11/16-17:32:04"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "13100",
+        "players": [
+            "Avallach",
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Winry"
+        ],
+        "date": "2022/11/02-22:12:57"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "5%",
+        "players": [
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [
+            "Avallach",
+            "Kizmet",
+            "Winry"
+        ],
+        "date": "2022/10/26-19:43:37"
+    },
+    {
         "type": "sessionexp",
         "exp_gained": "7%",
         "players": [
