@@ -1,5 +1,38 @@
 [
     {
+        "type": "sessionexp",
+        "exp_gained": "25000",
+        "players": [
+            "Gix",
+            "Brig",
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [],
+        "date": "2023/09/20-19:04:02"
+    },
+    {
+        "type": "sessionexp",
+        "exp_gained": "45%",
+        "players": [
+            "Gix",
+            "Avallach",
+            "Brig",
+            "Lindric",
+            "Ignar"
+        ],
+        "questlog_players": [],
+        "fastlog_players": [],
+        "date": "2023/09/20-19:01:49"
+    },
+    {
+        "type": "newplayer",
+        "name": "Gix",
+        "exp": 106980,
+        "date": "2023/09/20-19:01:26"
+    },
+    {
         "type": "newplayer",
         "name": "Brig",
         "exp": 165000,
