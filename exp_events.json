@@ -1,5 +1,70 @@
 [
     {
+        "type": "removeplayer",
+        "name": "Nala",
+        "date": "2023/09/20-22:51:49"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Nanny",
+        "date": "2023/09/20-22:51:47"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Sillvester",
+        "date": "2023/09/20-22:51:43"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Jagoda",
+        "date": "2023/09/20-22:51:38"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Kharon",
+        "date": "2023/09/20-22:51:34"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Barkom",
+        "date": "2023/09/20-22:51:29"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Crash",
+        "date": "2023/09/20-22:51:25"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Lelyvia",
+        "date": "2023/09/20-22:51:21"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Percival",
+        "date": "2023/09/20-22:49:53"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Kasdoth",
+        "date": "2023/09/20-22:49:48"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Taro",
+        "date": "2023/09/20-22:49:42"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Poppy",
+        "date": "2023/09/20-22:49:32"
+    },
+    {
+        "type": "removeplayer",
+        "name": "Sarah",
+        "date": "2023/09/20-22:46:57"
+    },
+    {
         "type": "sessionexp",
         "exp_gained": "25000",
         "players": [

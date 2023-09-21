@@ -134,7 +134,7 @@ EVENTSOURCE_FILE="exp_events.json"
 
 class State:
     players: Dict[str,int] = {}
-
+    removed_players: Dict[str, int] = {}
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="A Tool For Managing and Leveling Sunholm Players")
@@ -168,6 +168,17 @@ def main() -> None:
 
     parser_last_event = subparsers.add_parser("last", help="Print out the change dialog from the most recent session")
     # TODO, maybe an ability to print out an even more early one
+
+    parser_remove_player = subparsers.add_parser("remove", help="Remove a player from the list so they are no longer displayed.")
+    parser_remove_player.add_argument('playername', type=str, help="The name of the player to remove.")
+
+    parser_restore_player = subparsers.add_parser("restore", help="Restore a player that has been removed.")
+    parser_restore_player.add_argument('playername', type=str, help="The name of the player to restore.")
+
+    parser_removed_players = subparsers.add_parser("removed", help="Display all of the removed players.")
+    parser_removed_players.add_argument('playername', type=str, nargs="?", default="", help="The name of the player.")
+    parser_removed_players.add_argument('--sortby', type=str, choices=["exp", "name"], help="Sort list output")
+
 
     parsed_args = parser.parse_args()
 
@@ -213,6 +224,28 @@ def main() -> None:
 
     elif parsed_args.command == "last":
         list_previous_update()
+        return
+
+    elif parsed_args.command == "remove":
+        add_remove_player_event(
+            player_name=parsed_args.playername
+        )
+        list_previous_update()
+        return
+
+    elif parsed_args.command == "restore":
+        add_restore_player_event(
+            player_name=parsed_args.playername
+        )
+        list_previous_update()
+        return
+
+    elif parsed_args.command == "removed":
+        list_current_state(
+            parsed_args.playername,
+            parsed_args.sortby,
+            show_removed_instead=True
+        )
         return
 
     print("Error, a command must be chosen. Use --help to see commands")
@@ -298,6 +331,25 @@ def add_levelup_event(
     })
 
 
+def add_remove_player_event(
+    player_name: str,
+) -> None:
+    # TODO: Validate the player exists
+    add_event({
+        "type": "removeplayer",
+        "name": player_name,
+    })
+
+
+def add_restore_player_event(
+    player_name: str,
+) -> None:
+    add_event({
+        "type": "restoreplayer",
+        "name": player_name,
+    })
+
+
 def list_previous_update(n=0) -> None:
     events = get_event_list()
 
@@ -317,7 +369,11 @@ def list_previous_update(n=0) -> None:
     print("\n".join(process_event(events[n-1], state)))
 
 
-def list_current_state(filter_player: str="", sortby: str="") -> None: # todo this is not the right function but I am co-opting it for testing
+def list_current_state(
+    filter_player: str="",
+    sortby: str="",
+    show_removed_instead: bool=False,
+) -> None:
     events = get_event_list()
 
     state = State()
@@ -325,9 +381,13 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
     for event in events:
         process_event(event, state)
 
-    player_iter = state.players.keys()
+    players = state.players
+    if show_removed_instead:
+        players = state.removed_players
+
+    player_iter = players.keys()
     if sortby == "exp":
-        player_iter = sorted(player_iter, key=lambda name: state.players[name])
+        player_iter = sorted(player_iter, key=lambda name: players[name])
     elif sortby == "name":
         player_iter = sorted(player_iter)
     elif sortby:
@@ -337,7 +397,7 @@ def list_current_state(filter_player: str="", sortby: str="") -> None: # todo th
             continue
 
 
-        exp = state.players[player]
+        exp = players[player]
         level = get_level_from_exp(exp)
 
         remaining_exp = remaining_exp_string(level, exp)
@@ -376,6 +436,10 @@ def process_event(event: Any, state: State) -> List[str]:
         return process_levelup_event(event, state)
     elif event["type"] == "sessionexp":
         return process_session_exp_event(event, state)
+    elif event["type"] == "removeplayer":
+        return process_remove_player_event(event, state)
+    elif event["type"] == "restoreplayer":
+        return process_restore_player_event(event, state)
     else:
         print("ERROR: Invalid Event", event)
         return []
@@ -759,6 +823,44 @@ def percentage_bar(percentage: float, characters: int) -> str:
 
     return out
 
+
+
+def process_remove_player_event(event: Any, state: State) -> List[str]:
+    if event["name"] not in state.players:
+        print("WARNING: Player not found for removal.", event)
+        return []
+
+    if event["name"] in state.removed_players:
+        print("WARNING: Player is already in removed players", event)
+        return[]
+
+    state.removed_players[event["name"]] = state.players[event["name"]]
+    del state.players[event["name"]]
+
+    return [
+        "Removed {name}".format(
+            name=event["name"],
+        )
+    ]
+
+
+def process_restore_player_event(event: Any, state: State) -> List[str]:
+    if event["name"] not in state.removed_players:
+        print("WARNING: Player not found for restoration.", event)
+        return []
+
+    if event["name"] in state.players:
+        print("WARNING: Player is already a player", event)
+        return[]
+
+    state.players[event["name"]] = state.removed_players[event["name"]]
+    del state.removed_players[event["name"]]
+
+    return [
+        "Restored {name}".format(
+            name=event["name"],
+        )
+    ]
 
 
 if __name__ == "__main__":
